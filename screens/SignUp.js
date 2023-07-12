@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from "react";
 import {
   View,
   TextInput,
@@ -8,33 +8,34 @@ import {
   Animated,
   ImageBackground,
   ScrollView,
-  KeyboardAvoidingView,
-  Platform,
-} from 'react-native';
+} from "react-native";
 import {
   primaryColor,
   inputColor,
   buttonColor,
   buttonTextColor,
-} from '../color';
-import { Ionicons } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker';
-import DateTimePickerModal from 'react-native-modal-datetime-picker';
+} from "../color";
+import { Ionicons } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
+import DateTimePickerModal from "react-native-modal-datetime-picker";
+import { useNavigation } from "@react-navigation/native";
+import firebase from "../firebaseConfig";
 
 const SignupScreen = () => {
-  const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [name, setName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [location, setLocation] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [name, setName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [location, setLocation] = useState("");
   const [birthdate, setBirthdate] = useState(new Date());
   const [interests, setInterests] = useState([]);
   const [picture, setPicture] = useState(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const navigation = useNavigation();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0)).current;
 
@@ -53,19 +54,57 @@ const SignupScreen = () => {
     ]).start();
   }, [fadeAnim, scaleAnim]);
 
+  // const handleSignup = () => {
+  //   console.log('Username:', username);
+  //   console.log('Email:', email);
+  //   console.log('Password:', password);
+  //   console.log('Confirm Password:', confirmPassword);
+  //   console.log('Name:', name);
+  //   console.log('Last Name:', lastName);
+  //   console.log('Phone Number:', phoneNumber);
+  //   console.log('Location:', location);
+  //   console.log('Birthdate:', birthdate);
+  //   console.log('Interests:', interests);
+  //   console.log('Picture:', picture);
+  // };
+
   const handleSignup = () => {
-    // Perform signup logic here
-    console.log('Username:', username);
-    console.log('Email:', email);
-    console.log('Password:', password);
-    console.log('Confirm Password:', confirmPassword);
-    console.log('Name:', name);
-    console.log('Last Name:', lastName);
-    console.log('Phone Number:', phoneNumber);
-    console.log('Location:', location);
-    console.log('Birthdate:', birthdate);
-    console.log('Interests:', interests);
-    console.log('Picture:', picture);
+    firebase
+      .auth()
+      .createUserWithEmailAndPassword(email, password)
+      .then(({ user }) => {
+        console.log("Registration successful!", user.uid);
+        // Save user data to Firestore
+        firebase
+          .firestore()
+          .collection("users")
+          .doc(user.uid)
+          .set({
+            username,
+            email,
+            name,
+            lastName,
+            phoneNumber,
+            location,
+            birthdate,
+            interests,
+            picture,
+          })
+          .then(() => {
+            console.log("User data saved to Firestore successfully!");
+            Alert.alert("Success", "Registration successful!", [
+              { text: "OK", onPress: () => console.log("OK pressed") },
+            ]);
+          })
+          .catch((error) => {
+            console.log("Failed to save user data to Firestore:", error);
+            // Handle the error, display an error message, etc.
+          });
+      })
+      .catch((error) => {
+        console.log("Registration failed!", error);
+        // Handle the error, display an error message, etc.
+      });
   };
 
   const toggleShowPassword = () => {
@@ -73,10 +112,11 @@ const SignupScreen = () => {
   };
 
   const selectPicture = async () => {
-    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    const permissionResult =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
 
     if (permissionResult.granted === false) {
-      alert('Permission to access camera roll is required!');
+      alert("Permission to access camera roll is required!");
       return;
     }
 
@@ -87,134 +127,229 @@ const SignupScreen = () => {
     }
   };
 
+  const formatDateString = (date) => {
+    if (!date) {
+      return "DD/MM/YYYY"; // Placeholder value
+    }
+    const day = date.getDate().toString().padStart(2, "0");
+    const month = (date.getMonth() + 1).toString().padStart(2, "0");
+    const year = date.getFullYear().toString();
+    return `${day}/${month}/${year}`;
+  };
+
   return (
-    <ImageBackground source={require('../assets/signup.jpg')} style={styles.backgroundImage}>
+    <ImageBackground
+      source={require("../assets/signup.jpg")}
+      style={styles.backgroundImage}
+    >
+      <View style={styles.overlay} />
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <Animated.View style={[styles.form, { opacity: 0.9, transform: [{ scale: scaleAnim }] }]}>
-          <Text style={styles.title}>Create Account</Text>
-          <View style={styles.inputContainer}>
-            <Ionicons name="person-outline" size={24} color="#000" style={styles.icon} />
-            <TextInput
-              style={styles.input}
-              placeholder="Username"
-              onChangeText={text => setUsername(text)}
-              value={username}
-            />
-          </View>
-          <View style={styles.inputContainer}>
-            <Ionicons name="mail-outline" size={24} color="#000" style={styles.icon} />
-            <TextInput
-              style={styles.input}
-              placeholder="Email"
-              onChangeText={text => setEmail(text)}
-              value={email}
-            />
-          </View>
-          <View style={styles.inputContainer}>
-            <Ionicons name="lock-closed-outline" size={24} color="#000" style={styles.icon} />
-            <TextInput
-              style={styles.input}
-              placeholder="Password"
-              secureTextEntry={!showPassword}
-              onChangeText={text => setPassword(text)}
-              value={password}
-            />
-            <TouchableOpacity style={styles.showPasswordButton} onPress={toggleShowPassword}>
-              <Ionicons name={showPassword ? 'eye-off' : 'eye'} size={24} color="#000" />
+        <Animated.View
+          style={[
+            styles.form,
+            { opacity: 0.9, transform: [{ scale: scaleAnim }] },
+          ]}
+        >
+          <View>
+            <Text style={styles.title}>Create Account</Text>
+            <View style={styles.inputContainer}>
+              <Ionicons
+                name="person-outline"
+                size={24}
+                color="#000"
+                style={styles.icon}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Username"
+                onChangeText={(text) => setUsername(text)}
+                value={username}
+              />
+            </View>
+            <View style={styles.inputContainer}>
+              <Ionicons
+                name="mail-outline"
+                size={24}
+                color="#000"
+                style={styles.icon}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Email"
+                onChangeText={(text) => setEmail(text)}
+                value={email}
+              />
+            </View>
+            <View style={styles.inputContainer}>
+              <Ionicons
+                name="lock-closed-outline"
+                size={24}
+                color="#000"
+                style={styles.icon}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Password"
+                secureTextEntry={!showPassword}
+                onChangeText={(text) => setPassword(text)}
+                value={password}
+              />
+              <TouchableOpacity
+                style={styles.showPasswordButton}
+                onPress={toggleShowPassword}
+              >
+                <Ionicons
+                  name={showPassword ? "eye-off" : "eye"}
+                  size={24}
+                  color="#000"
+                />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.inputContainer}>
+              <Ionicons
+                name="lock-closed-outline"
+                size={24}
+                color="#000"
+                style={styles.icon}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Confirm Password"
+                secureTextEntry={!showPassword}
+                onChangeText={(text) => setConfirmPassword(text)}
+                value={confirmPassword}
+              />
+            </View>
+            <View style={styles.inputContainer}>
+              <Ionicons
+                name="person-outline"
+                size={24}
+                color="#000"
+                style={styles.icon}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="First Name"
+                onChangeText={(text) => setName(text)}
+                value={name}
+              />
+            </View>
+            <View style={styles.inputContainer}>
+              <Ionicons
+                name="person-outline"
+                size={24}
+                color="#000"
+                style={styles.icon}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Last Name"
+                onChangeText={(text) => setLastName(text)}
+                value={lastName}
+              />
+            </View>
+            <View style={styles.inputContainer}>
+              <Ionicons
+                name="call-outline"
+                size={24}
+                color="#000"
+                style={styles.icon}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Phone Number"
+                onChangeText={(text) => setPhoneNumber(text)}
+                value={phoneNumber}
+                keyboardType="phone-pad"
+              />
+            </View>
+            <View style={styles.inputContainer}>
+              <Ionicons
+                name="location-outline"
+                size={24}
+                color="#000"
+                style={styles.icon}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Location"
+                onChangeText={(text) => setLocation(text)}
+                value={location}
+              />
+            </View>
+
+            <TouchableOpacity
+              style={styles.inputContainer}
+              onPress={() => setShowDatePicker(true)}
+            >
+              <Ionicons
+                name="calendar-outline"
+                size={24}
+                color="#000"
+                style={styles.icon}
+              />
+              <Text style={styles.datePickerText}>
+                {formatDateString(birthdate)} { /* Placeholder value */ }
+                
+              </Text>
+            </TouchableOpacity>
+            {showDatePicker && (
+              <DateTimePickerModal
+                isVisible={showDatePicker}
+                mode="date"
+                date={birthdate || new Date()} 
+                onConfirm={(date) => {
+                  setBirthdate(date);
+                  setShowDatePicker(false);
+                }}
+                onCancel={() => setShowDatePicker(false)}
+              />
+            )}
+            <View style={styles.inputContainer}>
+              <Ionicons
+                name="heart-outline"
+                size={24}
+                color="#000"
+                style={styles.icon}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Interests"
+                onChangeText={(text) => setInterests(text.split(","))}
+                value={interests.join(", ")}
+              />
+            </View>
+            <TouchableOpacity
+              style={styles.pictureButton}
+              onPress={selectPicture}
+              activeOpacity={0.7}
+            >
+              <Ionicons
+                name="image-outline"
+                size={24}
+                color="#000"
+                style={styles.pictureIcon}
+              />
+              <Text style={[styles.pictureButtonText]}>Select Picture</Text>
+            </TouchableOpacity>
+            {picture && (
+              <Text style={styles.pictureText}>
+                Selected Picture: {picture}
+              </Text>
+            )}
+            <TouchableOpacity
+              style={styles.button}
+              onPress={handleSignup}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.buttonText}>Sign Up</Text>
             </TouchableOpacity>
           </View>
-          <View style={styles.inputContainer}>
-            <Ionicons name="lock-closed-outline" size={24} color="#000" style={styles.icon} />
-            <TextInput
-              style={styles.input}
-              placeholder="Confirm Password"
-              secureTextEntry={!showPassword}
-              onChangeText={text => setConfirmPassword(text)}
-              value={confirmPassword}
-            />
-          </View>
-          <View style={styles.inputContainer}>
-            <Ionicons name="person-outline" size={24} color="#000" style={styles.icon} />
-            <TextInput
-              style={styles.input}
-              placeholder="First Name"
-              onChangeText={text => setName(text)}
-              value={name}
-            />
-          </View>
-          <View style={styles.inputContainer}>
-            <Ionicons name="person-outline" size={24} color="#000" style={styles.icon} />
-            <TextInput
-              style={styles.input}
-              placeholder="Last Name"
-              onChangeText={text => setLastName(text)}
-              value={lastName}
-            />
-          </View>
-          <View style={styles.inputContainer}>
-            <Ionicons name="call-outline" size={24} color="#000" style={styles.icon} />
-            <TextInput
-              style={styles.input}
-              placeholder="Phone Number"
-              onChangeText={text => setPhoneNumber(text)}
-              value={phoneNumber}
-              keyboardType="phone-pad"
-            />
-          </View>
-          <View style={styles.inputContainer}>
-            <Ionicons name="location-outline" size={24} color="#000" style={styles.icon} />
-            <TextInput
-              style={styles.input}
-              placeholder="Location"
-              onChangeText={text => setLocation(text)}
-              value={location}
-            />
-          </View>
-          <TouchableOpacity style={styles.inputContainer} onPress={() => setShowDatePicker(true)}>
-            <Ionicons name="calendar-outline" size={24} color="#000" style={styles.icon} />
-            <Text style={styles.datePickerText}>{birthdate.toLocaleDateString()}</Text>
-          </TouchableOpacity>
-          {showDatePicker && (
-            <DateTimePickerModal
-              isVisible={showDatePicker}
-              mode="date"
-              date={birthdate}
-              onConfirm={date => {
-                setBirthdate(date);
-                setShowDatePicker(false);
-              }}
-              onCancel={() => setShowDatePicker(false)}
-            />
-          )}
-          <View style={styles.inputContainer}>
-            <Ionicons name="heart-outline" size={24} color="#000" style={styles.icon} />
-            <TextInput
-              style={styles.input}
-              placeholder="Interests"
-              onChangeText={text => setInterests(text.split(','))}
-              value={interests.join(', ')}
-            />
-          </View>
-          <TouchableOpacity
-            style={styles.pictureButton}
-            onPress={selectPicture}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="image-outline" size={24} color="#000" style={styles.pictureIcon} />
-            <Text style={styles.pictureButtonText}>Select Picture</Text>
-          </TouchableOpacity>
-          {picture && <Text style={styles.pictureText}>Selected Picture: {picture}</Text>}
-          <TouchableOpacity
-            style={styles.button}
-            onPress={handleSignup}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.buttonText}>Sign Up</Text>
-          </TouchableOpacity>
         </Animated.View>
+
         <View style={styles.footer}>
           <Text style={styles.footerText}>Already have an account? </Text>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate("LoginScreen")}>
             <Text style={[styles.footerText, styles.footerLink]}>Log in</Text>
           </TouchableOpacity>
         </View>
@@ -226,42 +361,37 @@ const SignupScreen = () => {
 const styles = StyleSheet.create({
   backgroundImage: {
     flex: 1,
-    resizeMode: 'cover',
-    justifyContent: 'center',
+    resizeMode: "cover",
+    justifyContent: "center",
   },
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: primaryColor,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.5)",
     opacity: 0.8,
   },
   scrollContainer: {
     flexGrow: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   form: {
-    width: '80%',
+    width: "80%",
     borderRadius: 10,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    backgroundColor: "#E8E8E8",
     padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
   },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontWeight: "bold",
+    color: primaryColor,
     marginBottom: 20,
-    textAlign: 'center',
+    textAlign: "center",
   },
   inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 10,
   },
   icon: {
@@ -273,35 +403,35 @@ const styles = StyleSheet.create({
     backgroundColor: inputColor,
     borderRadius: 5,
     paddingHorizontal: 10,
-    color: '#fff',
+    color: "#fff",
   },
   showPasswordButton: {
     marginLeft: -30,
   },
   pictureButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     marginTop: 20,
   },
   pictureIcon: {
     marginRight: 10,
   },
   pictureButtonText: {
-    color: '#fff',
+    color: "#000",
     fontSize: 16,
   },
   pictureText: {
     marginTop: 10,
-    color: '#fff',
+    color: "#fff",
   },
   button: {
-    width: '100%',
+    width: "100%",
     height: 40,
     backgroundColor: buttonColor,
     borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginTop: 20,
   },
   buttonText: {
@@ -309,25 +439,25 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
     marginTop: 20,
   },
   footerText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 14,
   },
   footerLink: {
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   datePickerContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
     marginTop: 10,
     borderRadius: 5,
     padding: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
   datePicker: {
     flex: 1,
@@ -341,7 +471,7 @@ const styles = StyleSheet.create({
   datePickerButtonText: {
     color: buttonTextColor,
     fontSize: 14,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   datePickerText: {
     flex: 1,
@@ -349,9 +479,14 @@ const styles = StyleSheet.create({
     backgroundColor: inputColor,
     borderRadius: 5,
     paddingHorizontal: 10,
-    color: '#fff',
-    flexDirection: 'row',
-    alignItems: 'center',
+    color: "#fff",
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 10,
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
 });
 

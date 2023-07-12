@@ -1,13 +1,28 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { View, TextInput, TouchableOpacity, Text, StyleSheet, Animated, ImageBackground } from 'react-native';
-import { primaryColor, inputColor, buttonColor, buttonTextColor } from '../color';
-import { Ionicons } from '@expo/vector-icons';
+import React, { useState, useRef, useEffect } from "react";
+import {
+  View,
+  TextInput,
+  TouchableOpacity,
+  Text,
+  StyleSheet,
+  Animated,
+  ImageBackground,
+} from "react-native";
+import Icon from "react-native-vector-icons/FontAwesome5";
+import {
+  primaryColor,
+  inputColor,
+  buttonColor,
+  buttonTextColor,
+} from "../color";
+import { useNavigation } from "@react-navigation/native";
 
 
 const LoginScreen = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const navigation = useNavigation();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0)).current;
 
@@ -28,18 +43,18 @@ const LoginScreen = () => {
 
   const handleLogin = () => {
     // Perform login logic here
-    console.log('Email:', email);
-    console.log('Password:', password);
+    console.log("Email:", email);
+    console.log("Password:", password);
   };
 
   const handleCreateAccount = () => {
     // Handle create account logic here
-    console.log('Create Account');
+    console.log("Create Account");
   };
 
   const handleForgotPassword = () => {
     // Handle forgot password logic here
-    console.log('Forgot Password');
+    console.log("Forgot Password");
   };
 
   const toggleShowPassword = () => {
@@ -47,13 +62,23 @@ const LoginScreen = () => {
   };
 
   return (
-    <ImageBackground source={require('../assets/login.jpg')} style={styles.backgroundImage}>
+    
+    <ImageBackground
+      source={require("../assets/login.jpg")}
+      style={styles.backgroundImage}
+    >
+        
       <View style={styles.container}>
-        <Animated.View style={[styles.form, { opacity: fadeAnim, transform: [{ scale: scaleAnim }] }]}>
+        <Animated.View
+          style={[
+            styles.form,
+            { opacity: fadeAnim, transform: [{ scale: scaleAnim }] },
+          ]}
+        >
           <TextInput
             style={styles.input}
             placeholder="Email"
-            onChangeText={text => setEmail(text)}
+            onChangeText={(text) => setEmail(text)}
             value={email}
           />
           <View style={styles.passwordContainer}>
@@ -61,11 +86,18 @@ const LoginScreen = () => {
               style={styles.input}
               placeholder="Password"
               secureTextEntry={!showPassword}
-              onChangeText={text => setPassword(text)}
+              onChangeText={(text) => setPassword(text)}
               value={password}
             />
-            <TouchableOpacity style={styles.showPasswordButton} onPress={toggleShowPassword}>
-              <Ionicons name={showPassword ? 'eye-off' : 'eye'} size={24} color="#000" />
+            <TouchableOpacity
+              style={styles.showPasswordButton}
+              onPress={toggleShowPassword}
+            >
+              <Icon
+                name={showPassword ? "eye-slash" : "eye"}
+                size={24}
+                color="#000"
+              />
             </TouchableOpacity>
           </View>
           <TouchableOpacity
@@ -75,10 +107,18 @@ const LoginScreen = () => {
           >
             <Text style={styles.buttonText}>Login</Text>
           </TouchableOpacity>
+          <View style={styles.authIconsContainer}>
+            <TouchableOpacity style={styles.authIcon}>
+              <Icon name="google" size={24} color="#DB4437" solid />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.authIcon}>
+              <Icon name="facebook-f" size={24} color="#3B5998" solid />
+            </TouchableOpacity>
+          </View>
         </Animated.View>
         <View style={styles.bottomContainer}>
-          <TouchableOpacity onPress={handleCreateAccount}>
-            <Text style={styles.bottomText}>Create Account</Text>
+          <TouchableOpacity onPress={() => navigation.navigate('SignupScreen')}>
+            <Text style={styles.bottomText} >Create Account</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={handleForgotPassword}>
             <Text style={styles.bottomText}>Forgot Password</Text>
@@ -92,67 +132,70 @@ const LoginScreen = () => {
 const styles = StyleSheet.create({
   backgroundImage: {
     flex: 1,
-    resizeMode: 'cover',
-    justifyContent: 'center',
+    resizeMode: "cover",
+    justifyContent: "center",
   },
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: primaryColor,
-    opacity: 0.8,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.5)",
+    opacity: 0.9,
   },
   form: {
-    width: '80%',
+    width: "80%",
     borderRadius: 10,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
   },
   input: {
-    width: '100%',
+    width: "100%",
     height: 40,
     backgroundColor: inputColor,
     borderRadius: 5,
     marginBottom: 10,
     paddingHorizontal: 10,
-    color: '#fff',
+    color: "#fff",
   },
   passwordContainer: {
-    position: 'relative',
+    position: "relative",
   },
   showPasswordButton: {
-    position: 'absolute',
+    position: "absolute",
     top: 10,
     right: 10,
   },
   button: {
-    width: '100%',
+    width: "100%",
     height: 40,
     backgroundColor: buttonColor,
     borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginTop: 20,
   },
   buttonText: {
     color: buttonTextColor,
     fontSize: 16,
   },
+  authIconsContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginTop: 20,
+  },
+  authIcon: {
+    marginHorizontal: 10,
+  },
   bottomContainer: {
-    flexDirection: 'column',
-    alignItems: 'center',
+    flexDirection: "column",
+    alignItems: "center",
     marginTop: 20,
   },
   bottomText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 14,
     marginVertical: 5,
-    textDecorationLine: 'underline',
+    textDecorationLine: "underline",
   },
 });
 

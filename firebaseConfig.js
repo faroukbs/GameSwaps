@@ -1,8 +1,9 @@
-import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
 
-// Your web app's Firebase configuration
+import { initializeApp } from 'firebase/app';
+import { getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
+
+// Initialize Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyB6SBNB5lGrRMkrnoezUBxx6XJcHPdwpDc",
   authDomain: "gameswaps-cc96c.firebaseapp.com",
@@ -14,9 +15,7 @@ const firebaseConfig = {
   measurementId: "G-L158BDTR9L"
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
+// Initialize Firebase Authentication and get a reference to the service
 const auth = getAuth(app);
-const firestore = getFirestore(app);
-
-export { app,  auth, firestore };
+const db = getFirestore(app);

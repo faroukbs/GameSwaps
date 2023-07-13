@@ -8,16 +8,19 @@ import {
   Animated,
   ImageBackground,
   ScrollView,
-  Alert,
 } from "react-native";
-import { primaryColor, inputColor, buttonColor, buttonTextColor } from "../color";
+import {
+  primaryColor,
+  inputColor,
+  buttonColor,
+  buttonTextColor,
+} from "../color";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { useNavigation } from "@react-navigation/native";
-import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore";
-import { auth, firestore } from '../firebaseConfig';
+import  {app, auth, firestore } from "../firebaseConfig";
+
 
 const SignupScreen = () => {
   const [username, setUsername] = useState("");
@@ -52,20 +55,27 @@ const SignupScreen = () => {
   }, [fadeAnim, scaleAnim]);
 
   const handleSignup = () => {
-    const authInstance = getAuth();
-    createUserWithEmailAndPassword(authInstance, email, password)
-      .then((userCredential) => {
-        const user = userCredential.user;
+    app
+      .auth()
+      .createUserWithEmailAndPassword(email, password)
+      .then(({ user }) => {
         console.log("Registration successful!", user.uid);
         // Save user data to Firestore
-        const userDocRef = doc(firestore, "users", user.uid);
-        setDoc(userDocRef, {
-          username,
-          email,
-          name,
-          lastName,
-          phoneNumber,
-        })
+        app
+          .firestore()
+          .collection("users")
+          .doc(user.uid)
+          .set({
+            username,
+            email,
+            name,
+            lastName,
+            phoneNumber,
+            location,
+            birthdate,
+            interests,
+            picture,
+          })
           .then(() => {
             console.log("User data saved to Firestore successfully!");
             Alert.alert("Success", "Registration successful!", [
@@ -98,7 +108,7 @@ const SignupScreen = () => {
 
     const result = await ImagePicker.launchImageLibraryAsync();
 
-    if (!result.cancelled) {
+    if (!result.canceled) {
       setPicture(result.uri);
     }
   };
@@ -224,7 +234,7 @@ const SignupScreen = () => {
                 keyboardType="phone-pad"
               />
             </View>
-            {/* <View style={styles.inputContainer}>
+            <View style={styles.inputContainer}>
               <Ionicons
                 name="location-outline"
                 size={24}
@@ -237,8 +247,8 @@ const SignupScreen = () => {
                 onChangeText={(text) => setLocation(text)}
                 value={location}
               />
-            </View> */}
-            {/* 
+            </View>
+
             <TouchableOpacity
               style={styles.inputContainer}
               onPress={() => setShowDatePicker(true)}
@@ -250,7 +260,7 @@ const SignupScreen = () => {
                 style={styles.icon}
               />
               <Text style={styles.datePickerText}>
-                {formatDateString(birthdate)} 
+                {formatDateString(birthdate)} {/* Placeholder value */}
               </Text>
             </TouchableOpacity>
             {showDatePicker && (
@@ -296,10 +306,10 @@ const SignupScreen = () => {
               <Text style={styles.pictureText}>
                 Selected Picture: {picture}
               </Text>
-            )} */}
+            )}
             <TouchableOpacity
               style={styles.button}
-              onPress={()=>handleSignup()}
+              onPress={handleSignup}
               activeOpacity={0.7}
             >
               <Text style={styles.buttonText}>Sign Up</Text>

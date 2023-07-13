@@ -19,7 +19,8 @@ import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { useNavigation } from "@react-navigation/native";
-import firebase from "../firebaseConfig";
+import  {app, auth, firestore } from "../firebaseConfig";
+
 
 const SignupScreen = () => {
   const [username, setUsername] = useState("");
@@ -69,13 +70,13 @@ const SignupScreen = () => {
   // };
 
   const handleSignup = () => {
-    firebase
+    app
       .auth()
       .createUserWithEmailAndPassword(email, password)
       .then(({ user }) => {
         console.log("Registration successful!", user.uid);
         // Save user data to Firestore
-        firebase
+        app
           .firestore()
           .collection("users")
           .doc(user.uid)
@@ -122,7 +123,7 @@ const SignupScreen = () => {
 
     const result = await ImagePicker.launchImageLibraryAsync();
 
-    if (!result.cancelled) {
+    if (!result.canceled) {
       setPicture(result.uri);
     }
   };
@@ -289,15 +290,14 @@ const SignupScreen = () => {
                 style={styles.icon}
               />
               <Text style={styles.datePickerText}>
-                {formatDateString(birthdate)} { /* Placeholder value */ }
-                
+                {formatDateString(birthdate)} {/* Placeholder value */}
               </Text>
             </TouchableOpacity>
             {showDatePicker && (
               <DateTimePickerModal
                 isVisible={showDatePicker}
                 mode="date"
-                date={birthdate || new Date()} 
+                date={birthdate || new Date()}
                 onConfirm={(date) => {
                   setBirthdate(date);
                   setShowDatePicker(false);

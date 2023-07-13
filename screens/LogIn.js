@@ -16,7 +16,7 @@ import {
   buttonTextColor,
 } from "../color";
 import { useNavigation } from "@react-navigation/native";
-
+import ForgotPassword from "./ForgotPassword";
 
 const LoginScreen = () => {
   const [email, setEmail] = useState("");
@@ -53,8 +53,7 @@ const LoginScreen = () => {
   };
 
   const handleForgotPassword = () => {
-    // Handle forgot password logic here
-    console.log("Forgot Password");
+    navigation.navigate("ForgotPassword");
   };
 
   const toggleShowPassword = () => {
@@ -62,12 +61,10 @@ const LoginScreen = () => {
   };
 
   return (
-    
     <ImageBackground
       source={require("../assets/login.jpg")}
       style={styles.backgroundImage}
     >
-        
       <View style={styles.container}>
         <Animated.View
           style={[
@@ -117,8 +114,8 @@ const LoginScreen = () => {
           </View>
         </Animated.View>
         <View style={styles.bottomContainer}>
-          <TouchableOpacity onPress={() => navigation.navigate('SignupScreen')}>
-            <Text style={styles.bottomText} >Create Account</Text>
+          <TouchableOpacity onPress={() => navigation.navigate("SignupScreen")}>
+            <Text style={styles.bottomText}>Create Account</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={handleForgotPassword}>
             <Text style={styles.bottomText}>Forgot Password</Text>

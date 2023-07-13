@@ -11,10 +11,10 @@ export default function App() {
   return (
     <NavigationContainer>
       <Stack.Navigator screenOptions={screenOptions}>
-         {/* <Stack.Screen name="Home" component={Home} options={{headerShown:}} />  */}
+          <Stack.Screen name="Home" component={Home} options={{headerShown:false}} />  
         <Stack.Screen name="LoginScreen" component={LogIn} options={{ headerShown: false }} />  
         <Stack.Screen name="SignupScreen" component={SignUp}  options={{ headerShown: false }}/>
-        <Stack.Screen name="ForgotPassword" component={ForgotPassword}  /> 
+        <Stack.Screen name="ForgotPassword" component={ForgotPassword}  />  
       </Stack.Navigator>
     </NavigationContainer>
   );

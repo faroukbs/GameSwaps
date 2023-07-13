@@ -11,8 +11,10 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
 
 const Home = () => {
+  const navigation = useNavigation();
   const [data, setData] = useState([
     { id: 1, title: "Item 1", image: require("../assets/login.jpg") },
     { id: 2, title: "Item 2", image: require("../assets/login.jpg") },
@@ -34,7 +36,7 @@ const Home = () => {
     const containerWidth = (screenWidth - 40) / 2; 
 
     return (
-      <TouchableOpacity style={[styles.listItem, { width: containerWidth }]}>
+      <TouchableOpacity style={[styles.listItem, { width: containerWidth }]} >
         <ImageBackground source={item.image} style={styles.itemImage} resizeMode="cover">
           <View style={styles.itemTitleContainer}>
             <Text style={styles.itemTitle}>{item.title}</Text>
@@ -45,21 +47,24 @@ const Home = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    
+    <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.greeting}>Hello, Username</Text>
+        <TouchableOpacity onPress={() => navigation.navigate("LoginScreen")}>
         <ImageBackground
           source={require("../assets/profileimg.jpg")}
           style={styles.profileImage}
           imageStyle={styles.profileImageBorder}
         />
+        </TouchableOpacity>
       </View>
-      {/* Search bar */}
+      
       <View style={styles.searchBar}>
         <Ionicons name="search" size={20} color="#0A4D68" />
         <TextInput style={styles.searchInput} placeholder="Search" />
       </View>
-      {/* Flat list */}
+     
       <FlatList
         data={data}
         renderItem={renderListItem}
@@ -67,7 +72,8 @@ const Home = () => {
         style={styles.flatList}
         numColumns={2}
       />
-    </SafeAreaView>
+    </View>
+   
   );
 };
 

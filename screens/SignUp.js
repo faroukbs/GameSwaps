@@ -16,7 +16,7 @@ import * as ImagePicker from "expo-image-picker";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { useNavigation } from "@react-navigation/native";
 import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore";
+import { addDoc, doc, setDoc } from "firebase/firestore";
 import { auth, firestore } from '../firebaseConfig';
 
 const SignupScreen = () => {
@@ -58,13 +58,17 @@ const SignupScreen = () => {
         const user = userCredential.user;
         console.log("Registration successful!", user.uid);
         // Save user data to Firestore
-        const userDocRef = doc(firestore, "users", user.uid);
+        const userDocRef = addDoc(firestore, "users", user.uid);
         setDoc(userDocRef, {
-          username,
-          email,
-          name,
-          lastName,
-          phoneNumber,
+          username: username,
+          email: email,
+          name: name,
+          lastName: lastName,
+          phoneNumber: phoneNumber,
+          location: location,
+          birthdate: birthdate,
+          interests: interests,
+          picture: picture,
         })
           .then(() => {
             console.log("User data saved to Firestore successfully!");
@@ -98,7 +102,7 @@ const SignupScreen = () => {
 
     const result = await ImagePicker.launchImageLibraryAsync();
 
-    if (!result.cancelled) {
+    if (!result.canceled) {
       setPicture(result.uri);
     }
   };
@@ -224,7 +228,7 @@ const SignupScreen = () => {
                 keyboardType="phone-pad"
               />
             </View>
-            {/* <View style={styles.inputContainer}>
+             <View style={styles.inputContainer}>
               <Ionicons
                 name="location-outline"
                 size={24}
@@ -237,8 +241,8 @@ const SignupScreen = () => {
                 onChangeText={(text) => setLocation(text)}
                 value={location}
               />
-            </View> */}
-            {/* 
+            </View> 
+             
             <TouchableOpacity
               style={styles.inputContainer}
               onPress={() => setShowDatePicker(true)}
@@ -296,7 +300,7 @@ const SignupScreen = () => {
               <Text style={styles.pictureText}>
                 Selected Picture: {picture}
               </Text>
-            )} */}
+            )} 
             <TouchableOpacity
               style={styles.button}
               onPress={()=>handleSignup()}

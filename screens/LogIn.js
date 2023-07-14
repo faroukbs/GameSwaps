@@ -16,7 +16,6 @@ import {
   buttonTextColor,
 } from "../color";
 import { useNavigation } from "@react-navigation/native";
-import ForgotPassword from "./ForgotPassword";
 import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
 
 const LoginScreen = () => {
@@ -41,20 +40,18 @@ const LoginScreen = () => {
       }),
     ]).start();
   }, [fadeAnim, scaleAnim]);
-  
-  const handleLogin = () => {
-    const auth = getAuth()
-    signInWithEmailAndPassword(auth, email, password)
-    .then((userCredential) => {
 
-      const user = userCredential.user;
-      console.log(user);
-      navigation.navigate("Home");
-      },
-      (error) => {
+  const handleLogin = () => {
+    const authInstance = getAuth();
+    signInWithEmailAndPassword(authInstance, email, password)
+      .then((userCredential) => {
+        const user = userCredential.user;
+        console.log(user);
+        navigation.navigate("Home");
+      })
+      .catch((error) => {
         console.log(error);
-      }
-    );
+      });
   };
 
   const handleCreateAccount = () => {
@@ -109,7 +106,7 @@ const LoginScreen = () => {
           </View>
           <TouchableOpacity
             style={styles.button}
-            onPress={handleLogin(email, password)}
+            onPress={handleLogin}
             activeOpacity={0.7}
           >
             <Text style={styles.buttonText}>Login</Text>

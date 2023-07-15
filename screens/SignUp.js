@@ -20,6 +20,7 @@ import { useNavigation } from "@react-navigation/native";
 import { getAuth, createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
 import { doc, setDoc, collection } from "firebase/firestore";
 import { firestore } from "../firebaseConfig";
+import CountryPickerModal from 'react-native-country-picker-modal';
 
 const SignupScreen = () => {
   const [username, setUsername] = useState("");
@@ -29,11 +30,15 @@ const SignupScreen = () => {
   const [name, setName] = useState("");
   const [lastName, setLastName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
-  const [location, setLocation] = useState("");
+  const [countryCode, setCountryCode] = useState("");
+  const [country, setCountry] = useState(null);
+  const [city, setCity] = useState("");
   const [birthdate, setBirthdate] = useState(new Date());
   const [interests, setInterests] = useState([]);
   const [picture, setPicture] = useState(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showCountryPicker, setShowCountryPicker] = useState(false);
+  const [showCityPicker, setShowCityPicker] = useState(false);
   const navigation = useNavigation();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0)).current;
@@ -71,7 +76,10 @@ const SignupScreen = () => {
         name,
         lastName,
         phoneNumber,
-        location,
+        location: {
+          country: country?.name || '',
+          city: city || ''
+        },
         birthdate,
         interests,
         picture,
@@ -250,21 +258,21 @@ const SignupScreen = () => {
                 keyboardType="phone-pad"
               />
             </View>
-             <View style={styles.inputContainer}>
+            <View style={styles.inputContainer}>
               <Ionicons
                 name="location-outline"
                 size={24}
                 color="#000"
                 style={styles.icon}
               />
-              <TextInput
+              <TouchableOpacity
                 style={styles.input}
-                placeholder="Location"
-                onChangeText={(text) => setLocation(text)}
-                value={location}
-              />
-            </View> 
-             
+                onPress={() => setShowCountryPicker(true)}
+              >
+                <Text>{country ? country.name : 'Select Country'}</Text>
+              </TouchableOpacity>
+            </View>
+
             <TouchableOpacity
               style={styles.inputContainer}
               onPress={() => setShowDatePicker(true)}
@@ -322,10 +330,10 @@ const SignupScreen = () => {
               <Text style={styles.pictureText}>
                 Selected Picture: {picture}
               </Text>
-            )} 
+            )}
             <TouchableOpacity
               style={styles.button}
-              onPress={()=>handleSignup()}
+              onPress={handleSignup}
               activeOpacity={0.7}
             >
               <Text style={styles.buttonText}>Sign Up</Text>
@@ -340,6 +348,29 @@ const SignupScreen = () => {
           </TouchableOpacity>
         </View>
       </ScrollView>
+
+      <CountryPickerModal
+        visible={showCountryPicker}
+        onClose={() => setShowCountryPicker(false)}
+        onSelect={(country) => {
+          setCountry(country);
+          setCountryCode(country.cca2);
+          setShowCountryPicker(false);
+        }}
+        withFilter
+        withFlag
+        withCountryNameButton
+        withCallingCodeButton
+        withAlphaFilter
+        withCallingCode
+        countryCode={countryCode}
+        preferredCountries={['US', 'GB']}
+        translation="eng"
+        modalProps={{ animationType: 'slide' }}
+      />
+
+      {/* Replace the CityPickerModal with the appropriate package for selecting cities */}
+
     </ImageBackground>
   );
 };

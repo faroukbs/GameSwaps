@@ -10,15 +10,16 @@ import {
   ScrollView,
   Alert,
   Linking,
+  Image,
 } from "react-native";
 import { primaryColor, inputColor, buttonColor, buttonTextColor } from "../color";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { useNavigation } from "@react-navigation/native";
-import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
-import { addDoc, doc, setDoc,  collection  } from "firebase/firestore";
-import { auth, firestore } from '../firebaseConfig';
+import { getAuth, createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
+import { doc, setDoc, collection } from "firebase/firestore";
+import { firestore } from "../firebaseConfig";
 
 const SignupScreen = () => {
   const [username, setUsername] = useState("");
@@ -52,68 +53,58 @@ const SignupScreen = () => {
     ]).start();
   }, [fadeAnim, scaleAnim]);
 
-  const handleSignup = () => {
-    const authInstance = getAuth();
-    createUserWithEmailAndPassword(authInstance, email, password)
-      .then((userCredential) => {
-        const user = userCredential.user;
-        console.log("Registration successful!", user.uid);
-        // Send email verification
-        sendEmailVerification(user)
-          .then(() => {
-            console.log("Email verification sent successfully!");
-            // Save user data to Firestore
-            const usersCollectionRef = collection(firestore, "users"); // Reference to the "users" collection
-            const userDocRef = doc(usersCollectionRef, username); // Reference to the document for the user
-            setDoc(userDocRef, {
-              username,
-              email,
-              name,
-              lastName,
-              phoneNumber,
-              location,
-              birthdate,
-              interests,
-              picture,
-            })
-              .then(() => {
-                console.log("User data saved to Firestore successfully!");
-                Alert.alert(
-                  "Success",
-                  "Registration successful! Please check your email to verify your account.",
-                  [
-                    {
-                      text: "OK",
-                      onPress: () => openEmailApp(),
-                    },
-                  ]
-                );
-              })
-              .catch((error) => {
-                console.log("Failed to save user data to Firestore:", error);
-                // Handle the error, display an error message, etc.
-              });
-          })
-          .catch((error) => {
-            console.log("Failed to send email verification:", error);
-            // Handle the error, display an error message, etc.
-          });
-      })
-      .catch((error) => {
-        console.log("Registration failed!", error);
-        // Handle the error, display an error message, etc.
+  const handleSignup = async () => {
+    try {
+      const authInstance = getAuth();
+      const userCredential = await createUserWithEmailAndPassword(authInstance, email, password);
+      const user = userCredential.user;
+      console.log("Registration successful!", user.uid);
+
+      await sendVerificationEmail(user);
+
+      // Save user data to Firestore
+      const usersCollectionRef = collection(firestore, "users"); // Reference to the "users" collection
+      const userDocRef = doc(usersCollectionRef, username); // Reference to the document for the user
+      await setDoc(userDocRef, {
+        username,
+        email,
+        name,
+        lastName,
+        phoneNumber,
+        location,
+        birthdate,
+        interests,
+        picture,
       });
+
+      console.log("User data saved to Firestore successfully!");
+
+      Alert.alert(
+        "Success",
+        "Registration successful! Please check your email to verify your account.",
+        [
+          {
+            text: "OK",
+            onPress: () => console.log('object'),
+          },
+        ]
+      );
+    } catch (error) {
+      console.log("Registration failed!", error);
+      // Handle the error, display an error message, etc.
+    }
   };
 
-  const sendEmailVerification = (user) => {
-    return new Promise((resolve, reject) => {
-      user.sendEmailVerification()
-        .then(() => resolve())
-        .catch((error) => reject(error));
-    });
+  const sendVerificationEmail = async (user) => {
+    try {
+      await sendEmailVerification(user);
+      console.log("Email verification sent successfully!");
+      alert("Email verification sent successfully!");
+    } catch (error) {
+      console.log("Failed to send email verification:", error);
+      // Handle the error, display an error message, etc.
+    }
   };
-  
-
   const openEmailApp = () => {
     Linking.openURL("mailto:" + email);
   };

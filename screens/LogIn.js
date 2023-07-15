@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Animated,
   ImageBackground,
+  Alert,
 } from "react-native";
 import Icon from "react-native-vector-icons/FontAwesome5";
 import {
@@ -46,18 +47,29 @@ const LoginScreen = () => {
     signInWithEmailAndPassword(authInstance, email, password)
       .then((userCredential) => {
         const user = userCredential.user;
-        console.log(user);
-        navigation.navigate("Home");
+        if (user.emailVerified) {
+          console.log(user);
+          navigation.navigate("Home");
+        } else {
+          // User's email is not verified
+          Alert.alert(
+            "Email Verification",
+            "Please verify your email address before logging in.",
+            [
+              {
+                text: "OK",
+                onPress: () => console.log("OK pressed"),
+              },
+            ]
+          );
+        }
       })
       .catch((error) => {
         console.log(error);
       });
   };
-
-  const handleCreateAccount = () => {
-    // Handle create account logic here
-    console.log("Create Account");
-  };
+  
+  
 
   const handleForgotPassword = () => {
     navigation.navigate("ForgotPassword");

@@ -4,6 +4,7 @@ import Home from "./screens/Home";
 import LogIn from "./screens/LogIn";
 import SignUp from "./screens/SignUp";
 import ForgotPassword from "./screens/ForgotPassword";
+import { AppRegistry } from 'react-native';
 
 const Stack = createNativeStackNavigator();
 

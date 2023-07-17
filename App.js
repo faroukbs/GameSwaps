@@ -15,7 +15,7 @@ export default function App() {
     <NavigationContainer>
       <Stack.Navigator screenOptions={screenOptions}>
 
-        {/* <Stack.Screen
+         <Stack.Screen
           name="Home"
           component={Home}
           options={{ headerShown: false }}
@@ -30,7 +30,7 @@ export default function App() {
           component={SignUp}
           options={{ headerShown: false }}
         />
-        <Stack.Screen name="ForgotPassword" component={ForgotPassword} /> */}
+        <Stack.Screen name="ForgotPassword" component={ForgotPassword} /> 
         <Stack.Screen name="GameAddingScreen" component={GameAddingScreen} />
       </Stack.Navigator>
     </NavigationContainer>

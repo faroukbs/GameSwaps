@@ -190,7 +190,7 @@ const Home = () => {
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={closeModal}>
+          <TouchableOpacity onPress={ ()=> navigation.navigate('GameAddingScreen')}>
             <View style={styles.modalItem}>
               <Ionicons
                 name="add-outline"

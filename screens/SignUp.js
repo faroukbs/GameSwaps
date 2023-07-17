@@ -17,7 +17,7 @@ import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { useNavigation } from "@react-navigation/native";
-import { getAuth, createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
+import { getAuth, createUserWithEmailAndPassword, sendEmailVerification ,updateProfile} from "firebase/auth";
 import { doc, setDoc, collection } from "firebase/firestore";
 import { firestore } from "../firebaseConfig";
 import CountryPickerModal from 'react-native-country-picker-modal';
@@ -32,13 +32,11 @@ const SignupScreen = () => {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [countryCode, setCountryCode] = useState("");
   const [country, setCountry] = useState(null);
-  const [city, setCity] = useState("");
   const [birthdate, setBirthdate] = useState(new Date());
   const [interests, setInterests] = useState([]);
   const [picture, setPicture] = useState(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showCountryPicker, setShowCountryPicker] = useState(false);
-  const [showCityPicker, setShowCityPicker] = useState(false);
   const navigation = useNavigation();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0)).current;
@@ -63,6 +61,13 @@ const SignupScreen = () => {
       const authInstance = getAuth();
       const userCredential = await createUserWithEmailAndPassword(authInstance, email, password);
       const user = userCredential.user;
+      await updateProfile(user, {
+        displayName: username,
+        photoURL: picture,
+        phoneNumber: phoneNumber,
+
+
+      });
       console.log("Registration successful!", user.uid);
 
       await sendVerificationEmail(user);
@@ -77,8 +82,7 @@ const SignupScreen = () => {
         lastName,
         phoneNumber,
         location: {
-          country: country?.name || '',
-          city: city || ''
+          country: country?.name || ''
         },
         birthdate,
         interests,
@@ -113,10 +117,6 @@ const SignupScreen = () => {
       // Handle the error, display an error message, etc.
     }
   };
-  const openEmailApp = () => {
-    Linking.openURL("mailto:" + email);
-  };
-
   const toggleShowPassword = () => {
     setShowPassword(!showPassword);
   };
@@ -266,10 +266,20 @@ const SignupScreen = () => {
                 style={styles.icon}
               />
               <TouchableOpacity
-                style={styles.input}
+                style={[styles.input, styles.countryPicker]}
                 onPress={() => setShowCountryPicker(true)}
               >
-                <Text>{country ? country.name : 'Select Country'}</Text>
+                {country && (
+                  <View style={styles.countryContainer}>
+                 
+                    <Text style={styles.countryName}>{country.name}</Text>
+                  </View>
+                )}
+                {!country && (
+                  <Text style={styles.countryPlaceholder}>
+                    Select Country
+                  </Text>
+                )}
               </TouchableOpacity>
             </View>
 
@@ -358,18 +368,12 @@ const SignupScreen = () => {
           setShowCountryPicker(false);
         }}
         withFilter
-        withFlag
         withCountryNameButton
         withCallingCodeButton
         withAlphaFilter
         withCallingCode
         countryCode={countryCode}
-        preferredCountries={['US', 'GB']}
-        translation="eng"
-        modalProps={{ animationType: 'slide' }}
       />
-
-      {/* Replace the CityPickerModal with the appropriate package for selecting cities */}
 
     </ImageBackground>
   );
@@ -504,6 +508,24 @@ const styles = StyleSheet.create({
   overlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  countryPicker: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 10,
+  },
+  countryContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  countryName: {
+    fontSize: 16,
+    color: "#fff",
+  },
+  countryPlaceholder: {
+    fontSize: 16,
+    color: "#808080",
   },
 });
 

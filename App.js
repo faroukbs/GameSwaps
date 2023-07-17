@@ -4,7 +4,9 @@ import Home from "./screens/Home";
 import LogIn from "./screens/LogIn";
 import SignUp from "./screens/SignUp";
 import ForgotPassword from "./screens/ForgotPassword";
-import { AppRegistry } from 'react-native';
+import GameAddingScreen from "./screens/GameAddingScreen";
+import { AppRegistry } from "react-native";
+
 
 const Stack = createNativeStackNavigator();
 
@@ -12,10 +14,24 @@ export default function App() {
   return (
     <NavigationContainer>
       <Stack.Navigator screenOptions={screenOptions}>
-          <Stack.Screen name="Home" component={Home} options={{headerShown:false}} />  
-        <Stack.Screen name="LoginScreen" component={LogIn} options={{ headerShown: false }} />  
-        <Stack.Screen name="SignupScreen" component={SignUp}  options={{ headerShown: false }}/>
-        <Stack.Screen name="ForgotPassword" component={ForgotPassword}  />  
+
+        {/* <Stack.Screen
+          name="Home"
+          component={Home}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="LoginScreen"
+          component={LogIn}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="SignupScreen"
+          component={SignUp}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen name="ForgotPassword" component={ForgotPassword} /> */}
+        <Stack.Screen name="GameAddingScreen" component={GameAddingScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
@@ -23,11 +39,11 @@ export default function App() {
 
 const screenOptions = {
   headerStyle: {
-    backgroundColor: "#0A4D68", 
-    opacity: 0.5, 
+    backgroundColor: "#0A4D68",
+    opacity: 0.5,
   },
-  headerTintColor: 'white', 
+  headerTintColor: "white",
   headerTitleStyle: {
-    fontWeight: 'bold', 
+    fontWeight: "bold",
   },
 };

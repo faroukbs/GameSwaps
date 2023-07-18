@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { collection, addDoc, getDocs } from "firebase/firestore";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { firestore } from "../firebaseConfig"; // Update the path to your firebaseConfig file
+import { firestore } from "../firebaseConfig";
 import MultiSelect from "react-native-multiple-select";
 import * as ImagePicker from "expo-image-picker";
 
@@ -68,7 +68,6 @@ const GameAddingScreen = () => {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.All,
         allowsEditing: true,
-        aspect: [4, 3],
         quality: 1,
       });
       if (!result.cancelled) {
@@ -152,19 +151,23 @@ const GameAddingScreen = () => {
           multiline
         />
 
-        {image && (
-          <Image
-            source={{ uri: image }}
-            style={styles.image}
-            resizeMode="contain"
-          />
-        )}
-        <TouchableOpacity
-          style={styles.imageUploadButton}
-          onPress={handleImageUpload}
-        >
-          <Text style={styles.imageUploadButtonText}>Upload Image</Text>
-        </TouchableOpacity>
+        <View style={styles.imageContainer}>
+          {image ? (
+            <Image
+              source={{ uri: image }}
+              style={styles.image}
+              resizeMode="cover"
+            />
+          ) : (
+            <View style={styles.placeholderImage} />
+          )}
+          <TouchableOpacity
+            style={styles.imageUploadButton}
+            onPress={handleImageUpload}
+          >
+            <Text style={styles.imageUploadButtonText}>Upload Image</Text>
+          </TouchableOpacity>
+        </View>
 
         <TouchableOpacity style={styles.addButton} onPress={handleAddGame}>
           <Text style={styles.addButtonLabel}>Add Game</Text>
@@ -173,6 +176,7 @@ const GameAddingScreen = () => {
     </SafeAreaView>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: {

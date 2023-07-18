@@ -12,15 +12,29 @@ import {
   Linking,
   Image,
 } from "react-native";
-import { primaryColor, inputColor, buttonColor, buttonTextColor } from "../color";
+import {
+  primaryColor,
+  inputColor,
+  buttonColor,
+  buttonTextColor,
+} from "../color";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { useNavigation } from "@react-navigation/native";
-import { getAuth, createUserWithEmailAndPassword, sendEmailVerification ,updateProfile} from "firebase/auth";
-import { doc, setDoc, collection } from "firebase/firestore";
+import {
+  getAuth,
+  createUserWithEmailAndPassword,
+  sendEmailVerification,
+  updateProfile,
+} from "firebase/auth";
+import { doc, setDoc, collection,getDocs } from "firebase/firestore";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { firestore } from "../firebaseConfig";
-import CountryPickerModal from 'react-native-country-picker-modal';
+import CountryPickerModal from "react-native-country-picker-modal";
+import MultiSelect from "react-native-multiple-select";
+
+const storage = getStorage();
 
 const SignupScreen = () => {
   const [username, setUsername] = useState("");
@@ -34,7 +48,9 @@ const SignupScreen = () => {
   const [country, setCountry] = useState(null);
   const [birthdate, setBirthdate] = useState(new Date());
   const [interests, setInterests] = useState([]);
+  const [selectedInterests, setSelectedInterests] = useState([]);
   const [picture, setPicture] = useState(null);
+  const [imageUrl, setImageUrl] = useState(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showCountryPicker, setShowCountryPicker] = useState(false);
   const navigation = useNavigation();
@@ -56,25 +72,70 @@ const SignupScreen = () => {
     ]).start();
   }, [fadeAnim, scaleAnim]);
 
+
+  const handleImageUpload = async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.All,
+        allowsEditing: true,
+        quality: 1,
+      });
+      if (!result.canceled) {
+        const { assets } = result;
+        const selectedAsset = assets[0]; // Assuming we only pick one image
+        const { uri } = selectedAsset;
+        setPicture(uri); // Set the profile picture URI to the 'picture' state
+        await uploadImage(uri); // Upload the image to Firebase Storage
+      }
+    } catch (error) {
+      console.log("Error uploading image: ", error);
+    }
+  };
+
+  const uploadImage = async (uri) => {
+    try {
+      const imageName = generateFileName();
+      const storageRef = ref(storage, `userProfileImage/${imageName}`);
+      const response = await fetch(uri);
+      const blob = await response.blob();
+      await uploadBytes(storageRef, blob);
+
+      const downloadUrl = await getDownloadURL(storageRef);
+      setImageUrl(downloadUrl);
+      console.log("Image uploaded successfully!");
+
+      console.log("Download URL: ", downloadUrl);
+    } catch (error) {
+      console.log("Error uploading image: ", error);
+    }
+  };
+
+  const generateFileName = () => {
+    const timestamp = new Date().getTime();
+    return `image_${timestamp}`;
+  };
+
   const handleSignup = async () => {
     try {
       const authInstance = getAuth();
-      const userCredential = await createUserWithEmailAndPassword(authInstance, email, password);
+      const userCredential = await createUserWithEmailAndPassword(
+        authInstance,
+        email,
+        password
+      );
       const user = userCredential.user;
       await updateProfile(user, {
         displayName: username,
-        photoURL: picture,
+        photoURL: imageUrl,
         phoneNumber: phoneNumber,
-
-
       });
       console.log("Registration successful!", user.uid);
 
       await sendVerificationEmail(user);
 
       // Save user data to Firestore
-      const usersCollectionRef = collection(firestore, "users"); // Reference to the "users" collection
-      const userDocRef = doc(usersCollectionRef, username); // Reference to the document for the user
+      const usersCollectionRef = collection(firestore, "users");
+      const userDocRef = doc(usersCollectionRef, username);
       await setDoc(userDocRef, {
         username,
         email,
@@ -82,11 +143,11 @@ const SignupScreen = () => {
         lastName,
         phoneNumber,
         location: {
-          country: country?.name || ''
+          country: country?.name || "",
         },
         birthdate,
-        interests,
-        picture,
+        interests: selectedInterests,
+        picture: imageUrl, // Save the download URL of the image in Firestore
       });
 
       console.log("User data saved to Firestore successfully!");
@@ -97,7 +158,7 @@ const SignupScreen = () => {
         [
           {
             text: "OK",
-            onPress: () => console.log('object'),
+            onPress: () => console.log("object"),
           },
         ]
       );
@@ -117,24 +178,9 @@ const SignupScreen = () => {
       // Handle the error, display an error message, etc.
     }
   };
+
   const toggleShowPassword = () => {
     setShowPassword(!showPassword);
-  };
-
-  const selectPicture = async () => {
-    const permissionResult =
-      await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-    if (permissionResult.granted === false) {
-      alert("Permission to access camera roll is required!");
-      return;
-    }
-
-    const result = await ImagePicker.launchImageLibraryAsync();
-
-    if (!result.canceled) {
-      setPicture(result.uri);
-    }
   };
 
   const formatDateString = (date) => {
@@ -145,6 +191,22 @@ const SignupScreen = () => {
     const month = (date.getMonth() + 1).toString().padStart(2, "0");
     const year = date.getFullYear().toString();
     return `${day}/${month}/${year}`;
+  };
+
+  useEffect(() => {
+    fetchTypes();
+  }, []);
+
+  const fetchTypes = async () => {
+    try {
+      const gameTypesCollectionRef = collection(firestore, "type");
+      const gameTypesSnapshot = await getDocs(gameTypesCollectionRef);
+      const doc = gameTypesSnapshot.docs[0];
+      const names = doc.data().name;
+      setInterests(names);
+    } catch (error) {
+      console.log("Error fetching game types: ", error);
+    }
   };
 
   return (
@@ -162,6 +224,41 @@ const SignupScreen = () => {
         >
           <View>
             <Text style={styles.title}>Create Account</Text>
+            <View style={styles.profilePictureContainer}>
+              {picture ? (
+                <TouchableOpacity
+                  onPress={handleImageUpload}
+                  activeOpacity={0.7}
+                  style={styles.profilePictureTouchable}
+                >
+                  <Image
+                    source={{ uri: picture }}
+                    style={styles.profilePicture}
+                  />
+                  <View style={styles.selectIconContainer}>
+                    <Ionicons
+                      name="image-outline"
+                      size={24}
+                      color="#fff"
+                      style={styles.selectIcon}
+                    />
+                  </View>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  onPress={handleImageUpload}
+                  activeOpacity={0.7}
+                  style={styles.profilePictureTouchable}
+                >
+                  <Ionicons
+                    name="image-outline"
+                    size={100}
+                    color="#000"
+                    style={styles.selectIcon}
+                  />
+                </TouchableOpacity>
+              )}
+            </View>
             <View style={styles.inputContainer}>
               <Ionicons
                 name="person-outline"
@@ -271,18 +368,14 @@ const SignupScreen = () => {
               >
                 {country && (
                   <View style={styles.countryContainer}>
-                 
                     <Text style={styles.countryName}>{country.name}</Text>
                   </View>
                 )}
                 {!country && (
-                  <Text style={styles.countryPlaceholder}>
-                    Select Country
-                  </Text>
+                  <Text style={styles.countryPlaceholder}>Select Country</Text>
                 )}
               </TouchableOpacity>
             </View>
-
             <TouchableOpacity
               style={styles.inputContainer}
               onPress={() => setShowDatePicker(true)}
@@ -294,7 +387,7 @@ const SignupScreen = () => {
                 style={styles.icon}
               />
               <Text style={styles.datePickerText}>
-                {formatDateString(birthdate)} 
+                {formatDateString(birthdate)}
               </Text>
             </TouchableOpacity>
             {showDatePicker && (
@@ -309,41 +402,41 @@ const SignupScreen = () => {
                 onCancel={() => setShowDatePicker(false)}
               />
             )}
-            <View style={styles.inputContainer}>
+            <View style={styles.pickerContainer}>
               <Ionicons
                 name="heart-outline"
                 size={24}
                 color="#000"
                 style={styles.icon}
               />
-              <TextInput
-                style={styles.input}
-                placeholder="Interests"
-                onChangeText={(text) => setInterests(text.split(","))}
-                value={interests.join(", ")}
-              />
+          <MultiSelect
+            items={interests.map((name, index) => ({
+              id: index.toString(),
+              name,
+            }))}
+            uniqueKey="id"
+            onSelectedItemsChange={(items) => setSelectedInterests(items)}
+            selectedItems={selectedInterests}
+            selectText="Select Interests Types"
+            tagRemoveIconColor="#CCC"
+            tagBorderColor="#CCC"
+            tagTextColor="#333"
+            selectedItemTextColor="#333"
+            selectedItemIconColor="#007bff"
+            itemTextColor="#000"
+            displayKey="name"
+            searchInputStyle={styles.searchInput}
+            submitButtonColor="#007bff"
+            submitButtonText="Submit"
+            styleMainWrapper={styles.picker}
+            styleDropdownMenuSubsection={styles.pickerDropdownMenuSubsection}
+            styleTextDropdownSelected={styles.pickerTextDropdownSelected}
+            styleDropdownMenu={styles.pickerDropdownMenu}
+          />
             </View>
             <TouchableOpacity
-              style={styles.pictureButton}
-              onPress={selectPicture}
-              activeOpacity={0.7}
-            >
-              <Ionicons
-                name="image-outline"
-                size={24}
-                color="#000"
-                style={styles.pictureIcon}
-              />
-              <Text style={[styles.pictureButtonText]}>Select Picture</Text>
-            </TouchableOpacity>
-            {picture && (
-              <Text style={styles.pictureText}>
-                Selected Picture: {picture}
-              </Text>
-            )}
-            <TouchableOpacity
               style={styles.button}
-              onPress={handleSignup}
+              onPress={handleSignup} // Use handleSignup function here
               activeOpacity={0.7}
             >
               <Text style={styles.buttonText}>Sign Up</Text>
@@ -374,7 +467,6 @@ const SignupScreen = () => {
         withCallingCode
         countryCode={countryCode}
       />
-
     </ImageBackground>
   );
 };
@@ -429,23 +521,55 @@ const styles = StyleSheet.create({
   showPasswordButton: {
     marginLeft: -30,
   },
-  pictureButton: {
-    flexDirection: "row",
+  profilePictureContainer: {
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    alignSelf: "center",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 5,
+    borderColor: "#fff",
+    backgroundColor: "#E8E8E8",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.5,
+    shadowRadius: 3.84,
+    elevation: 5,
+    marginTop: 30,
+    marginBottom: 20,
+  },
+  profilePictureTouchable: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 70,
+    overflow: "hidden",
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 20,
   },
-  pictureIcon: {
-    marginRight: 10,
+  selectIconContainer: {
+    position: "absolute",
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    borderRadius: 70,
   },
-  pictureButtonText: {
-    color: "#000",
-    fontSize: 16,
+  selectIcon: {
+    zIndex: 1,
   },
-  pictureText: {
-    marginTop: 10,
-    color: "#fff",
+  profilePicture: {
+    width: "100%",
+    height: "100%",
   },
+
+
   button: {
     width: "100%",
     height: 40,
@@ -526,6 +650,23 @@ const styles = StyleSheet.create({
   countryPlaceholder: {
     fontSize: 16,
     color: "#808080",
+  },
+  pickerContainer: {
+    marginBottom: 10,
+  },
+  pickerLabel: {
+    fontSize: 16,
+    marginBottom: 5,
+    color: "#333",
+  },
+  pickerDropdownMenuSubsection: {
+    backgroundColor: "#fff",
+  },
+  pickerTextDropdownSelected: {
+    color: "#333",
+  },
+  pickerDropdownMenu: {
+    marginTop: 1,
   },
 });
 

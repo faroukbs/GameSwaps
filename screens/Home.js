@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect , useCallback } from "react";
 import {
   View,
   Text,
@@ -10,34 +10,39 @@ import {
   Dimensions,
   Animated,
   ActivityIndicator,
+  RefreshControl,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
+import { collection, getDocs } from "firebase/firestore";
+import { firestore } from "../firebaseConfig";
 
 const Home = () => {
   const navigation = useNavigation();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [username, setUsername] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [data, setData] = useState([
-    { id: 1, title: "Item 1", image: require("../assets/login.jpg") },
-    { id: 2, title: "Item 2", image: require("../assets/login.jpg") },
-    { id: 3, title: "Item 3", image: require("../assets/login.jpg") },
-    { id: 4, title: "Item 4", image: require("../assets/login.jpg") },
-    { id: 5, title: "Item 5", image: require("../assets/login.jpg") },
-    { id: 6, title: "Item 6", image: require("../assets/login.jpg") },
-    { id: 7, title: "Item 7", image: require("../assets/login.jpg") },
-    { id: 8, title: "Item 8", image: require("../assets/login.jpg") },
-    { id: 9, title: "Item 9", image: require("../assets/login.jpg") },
-    { id: 10, title: "Item 10", image: require("../assets/login.jpg") },
-    { id: 11, title: "Item 11", image: require("../assets/login.jpg") },
-    { id: 12, title: "Item 12", image: require("../assets/login.jpg") },
-  ]);
+  const [data, setData] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
   const modalAnimation = new Animated.Value(0);
   const auth = getAuth();
+  const [refreshing, setRefreshing] = useState(false);
+  
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      // Perform the data fetching or refreshing tasks here
+      const gamesCollectionRef = collection(firestore, "games");
+      const gamesSnapshot = await getDocs(gamesCollectionRef);
+      const gamesData = gamesSnapshot.docs.map((doc) => doc.data());
+      setData(gamesData);
+    } catch (error) {
+      console.log("Error fetching games: ", error);
+    }
+    setRefreshing(false);
+  }, []);
 
   const openModal = () => {
     setModalVisible(true);
@@ -84,6 +89,22 @@ const Home = () => {
     return () => unsubscribe();
   }, [auth]);
 
+  // Retrieve data from Firestore "games" collection
+  useEffect(() => {
+    const fetchGames = async () => {
+      try {
+        const gamesCollectionRef = collection(firestore, "games");
+        const gamesSnapshot = await getDocs(gamesCollectionRef);
+        const gamesData = gamesSnapshot.docs.map((doc) => doc.data());
+        setData(gamesData);
+      } catch (error) {
+        console.log("Error fetching games: ", error);
+      }
+    };
+
+    fetchGames();
+  }, []);
+
   const handleAuthentication = () => {
     if (isAuthenticated) {
       handleSignOut();
@@ -91,6 +112,7 @@ const Home = () => {
       navigation.navigate("LoginScreen");
     }
   };
+
   const handleSignOut = async () => {
     try {
       await signOut(auth);
@@ -107,12 +129,12 @@ const Home = () => {
     return (
       <TouchableOpacity style={[styles.listItem, { width: containerWidth }]}>
         <ImageBackground
-          source={item.image}
+          source={{ uri: item.imageUrl }}
           style={styles.itemImage}
           resizeMode="cover"
         >
           <View style={styles.itemTitleContainer}>
-            <Text style={styles.itemTitle}>{item.title}</Text>
+            <Text style={styles.itemTitle}>{item.name}</Text>
           </View>
         </ImageBackground>
       </TouchableOpacity>
@@ -129,7 +151,7 @@ const Home = () => {
 
   return (
     <View style={styles.container}>
-            <View style={styles.header}>
+      <View style={styles.header}>
         <Text style={styles.greeting}>
           {username ? `Hello, ${username}` : "Hello, please log in"}
         </Text>
@@ -146,15 +168,20 @@ const Home = () => {
         <Ionicons name="search" size={20} color="#0A4D68" />
         <TextInput style={styles.searchInput} placeholder="Search" />
       </View>
-
-      <FlatList
-        data={data}
-        renderItem={renderListItem}
-        keyExtractor={(item) => item.id.toString()}
-        style={styles.flatList}
-        numColumns={2}
-      />
-
+      <SafeAreaView style={styles.safeAreaContainer}>
+        <FlatList
+          data={data}
+          renderItem={renderListItem}
+          keyExtractor={(item, index) =>
+            item.id ? item.id.toString() : index.toString()
+          }
+          style={styles.flatList}
+          numColumns={2}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+          }
+        />
+      </SafeAreaView>
       {modalVisible && (
         <Animated.View
           style={[
@@ -190,7 +217,9 @@ const Home = () => {
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={ ()=> navigation.navigate('GameAddingScreen')}>
+          <TouchableOpacity
+            onPress={() => navigation.navigate("GameAddingScreen")}
+          >
             <View style={styles.modalItem}>
               <Ionicons
                 name="add-outline"
@@ -206,6 +235,7 @@ const Home = () => {
     </View>
   );
 };
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,

@@ -135,7 +135,7 @@ const SignupScreen = () => {
 
       // Save user data to Firestore
       const usersCollectionRef = collection(firestore, "users");
-      const userDocRef = doc(usersCollectionRef, username);
+      const userDocRef = doc(usersCollectionRef, user.uid);
       await setDoc(userDocRef, {
         username,
         email,
@@ -172,7 +172,7 @@ const SignupScreen = () => {
     try {
       await sendEmailVerification(user);
       console.log("Email verification sent successfully!");
-      alert("Email verification sent successfully!");
+      //alert("Email verification sent successfully!");
     } catch (error) {
       console.log("Failed to send email verification:", error);
       // Handle the error, display an error message, etc.

@@ -1,4 +1,4 @@
-import React, { useState, useEffect , useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -16,8 +16,16 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs,doc, getDoc } from "firebase/firestore";
 import { firestore } from "../firebaseConfig";
+import {
+  inputColor,
+  textColor,
+  buttonColor,
+  primaryColor,
+  buttonTextColor,
+} from "../color";
+import placeholderImage from "../assets/profileimg.jpg";
 
 const Home = () => {
   const navigation = useNavigation();
@@ -29,7 +37,21 @@ const Home = () => {
   const modalAnimation = new Animated.Value(0);
   const auth = getAuth();
   const [refreshing, setRefreshing] = useState(false);
-  
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filteredData, setFilteredData] = useState(data);
+  const [profileImageUrl, setProfileImageUrl] = useState(null);
+
+  const navigateToDetail = (item) => {
+    navigation.navigate("GameDetailScreen", { item });
+  };
+
+  useEffect(() => {
+    const filteredGames = data.filter((game) =>
+      game.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    setFilteredData(filteredGames);
+  }, [data, searchQuery]);
+
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
@@ -63,6 +85,7 @@ const Home = () => {
     });
   };
 
+
   const modalTranslateX = modalAnimation.interpolate({
     inputRange: [0, 1],
     outputRange: [Dimensions.get("window").width, 0],
@@ -78,7 +101,29 @@ const Home = () => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         setIsAuthenticated(true);
-        setUsername(user.displayName);
+
+        // Check if user.displayName exists and is a non-empty string before setting it
+        if (user.displayName && user.displayName.trim()) {
+          setUsername(user.displayName.trim());
+        } else {
+          setUsername(null);
+        }
+
+        // Fetch the user's profile data and profile image URL
+        const userProfileRef = doc(firestore, "users", user.uid);
+        getDoc(userProfileRef)
+          .then((snapshot) => {
+            if (snapshot.exists()) {
+              // Assuming you have stored the profile image URL in the 'profileImageUrl' field
+              const profileImageUrl = snapshot.data().profileImageUrl;
+              setProfileImageUrl(profileImageUrl);
+            } else {
+              // Handle the case when the user profile data doesn't exist
+            }
+          })
+          .catch((error) => {
+            console.log("Error fetching user profile data: ", error);
+          });
       } else {
         setIsAuthenticated(false);
         setUsername(null);
@@ -127,16 +172,21 @@ const Home = () => {
     const containerWidth = (screenWidth - 40) / 2;
 
     return (
-      <TouchableOpacity style={[styles.listItem, { width: containerWidth }]}>
-        <ImageBackground
-          source={{ uri: item.imageUrl }}
-          style={styles.itemImage}
-          resizeMode="cover"
-        >
-          <View style={styles.itemTitleContainer}>
-            <Text style={styles.itemTitle}>{item.name}</Text>
-          </View>
-        </ImageBackground>
+      <TouchableOpacity
+        style={[styles.listItem, { width: containerWidth }]}
+        onPress={() => navigateToDetail(item)} // Navigate to detail screen on press
+      >
+        <View style={styles.itemContainer}>
+          <ImageBackground
+            source={{ uri: item.imageUrl }}
+            style={styles.itemImage}
+            resizeMode="cover"
+          >
+            <View style={styles.itemTitleContainer}>
+              <Text style={styles.itemTitle}>{item.name}</Text>
+            </View>
+          </ImageBackground>
+        </View>
       </TouchableOpacity>
     );
   };
@@ -144,94 +194,122 @@ const Home = () => {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#0A4D68" />
+        <ActivityIndicator size="large" color={inputColor} />
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      <ImageBackground
+        source={require("../assets/bghome.jpg")}
+        style={styles.backgroundImage}
+        resizeMode="cover"
+      >
+        <View style={styles.header}>
         <Text style={styles.greeting}>
           {username ? `Hello, ${username}` : "Hello, please log in"}
         </Text>
-        <TouchableOpacity onPress={openModal}>
-          <ImageBackground
-            source={require("../assets/profileimg.jpg")}
-            style={styles.profileImage}
-            imageStyle={styles.profileImageBorder}
+          {isAuthenticated ? (
+            // If authenticated, show user's profile image or placeholder image
+            <TouchableOpacity onPress={openModal}>
+              <ImageBackground
+                source={
+                  profileImageUrl ? { uri: profileImageUrl } : placeholderImage
+                }
+                style={styles.profileImage}
+                imageStyle={styles.profileImageBorder}
+              />
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity onPress={openModal }>
+            <ImageBackground
+              source={placeholderImage}
+              style={styles.profileImage}
+              imageStyle={styles.profileImageBorder}
+            />
+            </TouchableOpacity>
+          )}
+        </View>
+        <View style={styles.searchBar}>
+          <Ionicons name="search" size={20} color={inputColor} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search"
+            placeholderTextColor={inputColor}
+            value={searchQuery}
+            onChangeText={(text) => setSearchQuery(text)}
           />
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.searchBar}>
-        <Ionicons name="search" size={20} color="#0A4D68" />
-        <TextInput style={styles.searchInput} placeholder="Search" />
-      </View>
-      <SafeAreaView style={styles.safeAreaContainer}>
-        <FlatList
-          data={data}
-          renderItem={renderListItem}
-          keyExtractor={(item, index) =>
-            item.id ? item.id.toString() : index.toString()
-          }
-          style={styles.flatList}
-          numColumns={2}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
-          }
-        />
-      </SafeAreaView>
-      {modalVisible && (
-        <Animated.View
-          style={[
-            styles.modalContainer,
-            {
-              opacity: modalOpacity,
-              transform: [{ translateX: modalTranslateX }],
-            },
-          ]}
-        >
-          <TouchableOpacity onPress={handleAuthentication}>
-            <View style={styles.modalItem}>
-              <Ionicons
-                name={isAuthenticated ? "log-out-outline" : "log-in-outline"}
-                size={20}
-                color="#0A4D68"
-                style={styles.modalIcon}
+        </View>
+        <SafeAreaView style={styles.safeAreaContainer}>
+          <FlatList
+            data={filteredData} // Render the filtered data
+            renderItem={renderListItem}
+            keyExtractor={(item, index) =>
+              item.id ? item.id.toString() : index.toString()
+            }
+            style={styles.flatList}
+            numColumns={2}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={handleRefresh}
               />
-              <Text style={styles.modalText}>
-                {isAuthenticated ? "Sign Out" : "Log In"}
-              </Text>
-            </View>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={closeModal}>
-            <View style={styles.modalItem}>
-              <Ionicons
-                name="person-outline"
-                size={20}
-                color="#0A4D68"
-                style={styles.modalIcon}
-              />
-              <Text style={styles.modalText}>Profile</Text>
-            </View>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => navigation.navigate("GameAddingScreen")}
+            }
+          />
+        </SafeAreaView>
+        {modalVisible && (
+          <Animated.View
+            style={[
+              styles.modalContainer,
+              {
+                opacity: modalOpacity,
+                transform: [{ translateX: modalTranslateX }],
+              },
+            ]}
           >
-            <View style={styles.modalItem}>
-              <Ionicons
-                name="add-outline"
-                size={20}
-                color="#0A4D68"
-                style={styles.modalIcon}
-              />
-              <Text style={styles.modalText}>Adding Game</Text>
-            </View>
-          </TouchableOpacity>
-        </Animated.View>
-      )}
+            <TouchableOpacity onPress={handleAuthentication}>
+              <View style={styles.modalItem}>
+                <Ionicons
+                  name={isAuthenticated ? "log-out-outline" : "log-in-outline"}
+                  size={20}
+                  color={inputColor}
+                  style={styles.modalIcon}
+                />
+                <Text style={styles.modalText}>
+                  {isAuthenticated ? "Sign Out" : "Log In"}
+                </Text>
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={closeModal}>
+              <View style={styles.modalItem}>
+                <Ionicons
+                  name="person-outline"
+                  size={20}
+                  color={inputColor}
+                  style={styles.modalIcon}
+                />
+                <Text style={styles.modalText}>Profile</Text>
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => navigation.navigate("GameAddingScreen")}
+            >
+              <View style={styles.modalItem}>
+                <Ionicons
+                  name="add-outline"
+                  size={20}
+                  color={inputColor}
+                  style={styles.modalIcon}
+                />
+                <Text style={styles.modalText}>Adding Game</Text>
+              </View>
+            </TouchableOpacity>
+          </Animated.View>
+        )}
+      </ImageBackground>
     </View>
   );
 };
@@ -239,7 +317,14 @@ const Home = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#d3d3d3",
+    backgroundColor: "#f0f0f0",
+  },
+  itemContainer: {
+    borderRadius: 20,
+    overflow: "hidden",
+  },
+  backgroundImage: {
+    flex: 1,
   },
   header: {
     flexDirection: "row",
@@ -252,7 +337,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     marginTop: 9,
-    color: "#0A4D68",
+    color: textColor,
   },
   profileImage: {
     width: 35,
@@ -260,6 +345,8 @@ const styles = StyleSheet.create({
   },
   profileImageBorder: {
     borderRadius: 25,
+    borderWidth: 1,
+    borderColor: inputColor,
   },
   searchBar: {
     flexDirection: "row",
@@ -268,16 +355,13 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     marginHorizontal: 20,
     marginRight: 39,
-    borderWidth: 1,
-    borderColor: "#0A4D68",
     backgroundColor: "#fff",
     borderRadius: 5,
   },
   searchInput: {
     flex: 1,
     marginLeft: 10,
-    color: "#0A4D68",
-    paddingLeft: 10,
+    color: inputColor,
   },
   flatList: {
     paddingHorizontal: 20,
@@ -322,13 +406,13 @@ const styles = StyleSheet.create({
   },
   modalText: {
     fontSize: 16,
-    color: "#0A4D68",
+    color: inputColor,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#d3d3d3",
+    backgroundColor: "#f0f0f0",
   },
 });
 

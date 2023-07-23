@@ -5,17 +5,14 @@ import LogIn from "./screens/LogIn";
 import SignUp from "./screens/SignUp";
 import ForgotPassword from "./screens/ForgotPassword";
 import GameAddingScreen from "./screens/GameAddingScreen";
-import { AppRegistry } from "react-native";
-
-
+import GameDetailScreen from "./screens/GameDetailScreen";
 const Stack = createNativeStackNavigator();
 
 export default function App() {
   return (
     <NavigationContainer>
       <Stack.Navigator screenOptions={screenOptions}>
-
-         <Stack.Screen
+        <Stack.Screen
           name="Home"
           component={Home}
           options={{ headerShown: false }}
@@ -23,14 +20,15 @@ export default function App() {
         <Stack.Screen
           name="LoginScreen"
           component={LogIn}
-          options={{ headerShown: false }}
+          options={{ headerShown: false}}
         />
         <Stack.Screen
           name="SignupScreen"
           component={SignUp}
           options={{ headerShown: false }}
         />
-        <Stack.Screen name="ForgotPassword" component={ForgotPassword} /> 
+        <Stack.Screen name="GameDetailScreen" component={GameDetailScreen} />
+        <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
         <Stack.Screen name="GameAddingScreen" component={GameAddingScreen} />
       </Stack.Navigator>
     </NavigationContainer>

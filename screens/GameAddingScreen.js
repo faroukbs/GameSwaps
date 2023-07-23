@@ -8,12 +8,18 @@ import {
   Image,
   SafeAreaView,
   ScrollView,
+  Platform,
+  Alert,
 } from "react-native";
 import { collection, addDoc, getDocs } from "firebase/firestore";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
 import { firestore } from "../firebaseConfig";
 import MultiSelect from "react-native-multiple-select";
 import * as ImagePicker from "expo-image-picker";
+import * as Notifications from "expo-notifications";
+import * as Device from "expo-device";
+import { useNavigation } from "@react-navigation/native";
 
 const storage = getStorage();
 
@@ -24,10 +30,46 @@ const GameAddingScreen = () => {
   const [gameTypes, setGameTypes] = useState([]);
   const [image, setImage] = useState(null);
   const [imageUrl, setImageUrl] = useState(null);
+  const auth = getAuth();
+  const [user, setUser] = useState(null);
+  const navigation = useNavigation();
+  const showLoginPrompt = () => {
+    Alert.alert(
+      "Login Required",
+      "You must be logged in to add a game.",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Login",
+          onPress: handleLoginPrompt,
+        },
+      ],
+      { cancelable: false }
+    );
+  };
+
+  useEffect(() => {
+    // Check if the user is authenticated
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (user) {
+        setUser(user);
+      } else {
+        showLoginPrompt();
+      }
+    });
+    return () => unsubscribe();
+  }, []);
 
   useEffect(() => {
     fetchGameTypes();
   }, []);
+
+  const handleLoginPrompt = () => {
+    navigation.navigate("LoginScreen");
+  };
 
   const fetchGameTypes = async () => {
     try {
@@ -43,11 +85,17 @@ const GameAddingScreen = () => {
 
   const handleAddGame = async () => {
     try {
+      if (!user) {
+        showLoginPrompt();
+        return;
+      }
+
       const gameData = {
         name: gameName,
         types: selectedGameTypes,
         description: gameDescription,
         imageUrl: imageUrl,
+        userId: user.uid, 
       };
       const docRef = await addDoc(collection(firestore, "games"), gameData);
 
@@ -58,8 +106,54 @@ const GameAddingScreen = () => {
       setImageUrl(null);
 
       console.log("Game added successfully!");
+
+      // Request push notification permissions
+      const { status } = await Notifications.getPermissionsAsync();
+      if (status !== "granted") {
+        const { granted } = await Notifications.requestPermissionsAsync();
+        if (!granted) {
+          console.log("Push notification permission not granted.");
+          return;
+        }
+      }
+
+      // Get the user's Expo push token
+      let expoPushToken;
+      if (Platform.OS === "android") {
+        expoPushToken = (await Notifications.getDevicePushTokenAsync()).data;
+      } else {
+        expoPushToken = (await Notifications.getExpoPushTokenAsync()).data;
+      }
+
+      // Send the push notification using Expo's push token
+      const notificationTitle = "New Game Added!";
+      const notificationBody = `${gameName} has been added to the games collection.`;
+      await sendPushNotification(
+        expoPushToken,
+        notificationTitle,
+        notificationBody
+      );
     } catch (error) {
       console.log("Error adding game: ", error);
+    }
+  };
+
+  const sendPushNotification = async (expoPushToken, title, body) => {
+    try {
+      // Send the push notification using Expo's push token
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title,
+          body,
+          sound: "default",
+        },
+        trigger: null, // Send the notification immediately.
+        to: expoPushToken,
+      });
+
+      console.log("Push notification tab3thet");
+    } catch (error) {
+      console.log("Error sending push notification: ", error);
     }
   };
 
@@ -176,7 +270,6 @@ const GameAddingScreen = () => {
     </SafeAreaView>
   );
 };
-
 
 const styles = StyleSheet.create({
   container: {

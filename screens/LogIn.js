@@ -23,9 +23,11 @@ const LoginScreen = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const navigation = useNavigation();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0)).current;
+  const errorMessageAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     Animated.parallel([
@@ -43,6 +45,19 @@ const LoginScreen = () => {
   }, [fadeAnim, scaleAnim]);
 
   const handleLogin = () => {
+    // Input validation
+    if (!isValidEmail(email)) {
+      setErrorMessage("Please enter a valid email address.");
+      animateErrorMessage();
+      return;
+    }
+  
+    if (!isValidPassword(password)) {
+      setErrorMessage("Password must be at least 6 characters long.");
+      animateErrorMessage();
+      return;
+    }
+  
     const authInstance = getAuth();
     signInWithEmailAndPassword(authInstance, email, password)
       .then((userCredential) => {
@@ -52,24 +67,53 @@ const LoginScreen = () => {
           navigation.navigate("Home");
         } else {
           // User's email is not verified
-          Alert.alert(
-            "Email Verification",
-            "Please verify your email address before logging in.",
-            [
-              {
-                text: "OK",
-                onPress: () => console.log("OK pressed"),
-              },
-            ]
-          );
+          setErrorMessage("Please verify your email address before logging in.");
+          animateErrorMessage();
         }
       })
       .catch((error) => {
         console.log(error);
+        // Handle login error and display appropriate error message
+        if (error.code === "auth/wrong-password") {
+          setErrorMessage("Incorrect password. Please try again.");
+          animateErrorMessage();
+        } else if (
+          error.code === "auth/invalid-email" ||
+          error.code === "auth/user-not-found"
+        ) {
+          setErrorMessage("Invalid credentials. Please try again.");
+          animateErrorMessage();
+        } else {
+          setErrorMessage("An error occurred. Please try again later.");
+          animateErrorMessage();
+        }
       });
   };
-  
-  
+
+  const isValidEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const isValidPassword = (password) => {
+    return password.length >= 6;
+  };
+
+  const animateErrorMessage = () => {
+    Animated.timing(errorMessageAnim, {
+      toValue: 1,
+      duration: 300,
+      useNativeDriver: true,
+    }).start(() => {
+      setTimeout(() => {
+        Animated.timing(errorMessageAnim, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }).start();
+      }, 2000);
+    });
+  };
 
   const handleForgotPassword = () => {
     navigation.navigate("ForgotPassword");
@@ -140,6 +184,24 @@ const LoginScreen = () => {
             <Text style={styles.bottomText}>Forgot Password</Text>
           </TouchableOpacity>
         </View>
+        <Animated.View
+          style={[
+            styles.errorMessageContainer,
+            {
+              opacity: errorMessageAnim,
+              transform: [
+                {
+                  translateY: errorMessageAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0, -10],
+                  }),
+                },
+              ],
+            },
+          ]}
+        >
+          <Text style={styles.errorMessageText}>{errorMessage}</Text>
+        </Animated.View>
       </View>
     </ImageBackground>
   );
@@ -212,6 +274,18 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginVertical: 5,
     textDecorationLine: "underline",
+  },
+  errorMessageContainer: {
+    position: "absolute",
+    bottom: 70,
+    backgroundColor: "#f00",
+    padding: 10,
+    borderRadius: 5,
+    alignSelf: "center",
+  },
+  errorMessageText: {
+    color: "#fff",
+    textAlign: "center",
   },
 });
 

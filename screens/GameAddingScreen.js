@@ -7,7 +7,7 @@ import {
   StyleSheet,
   Image,
   SafeAreaView,
-  ScrollView,
+  FlatList,
   Platform,
   Alert,
 } from "react-native";
@@ -164,8 +164,9 @@ const GameAddingScreen = () => {
         allowsEditing: true,
         quality: 1,
       });
-      if (!result.cancelled) {
-        const { uri } = result;
+      if (!result.canceled) {
+        const { assets } = result;
+        const { uri } = assets[0];
         setImage(uri);
         await uploadImage(uri);
       }
@@ -199,74 +200,79 @@ const GameAddingScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView>
-        <Text style={styles.title}>Add Game</Text>
-
-        <TextInput
-          style={styles.input}
-          placeholder="Game Name"
-          onChangeText={(text) => setGameName(text)}
-          value={gameName}
-        />
-
-        <View style={styles.pickerContainer}>
-          <Text style={styles.pickerLabel}>Game Types</Text>
-          <MultiSelect
-            items={gameTypes.map((name, index) => ({
-              id: index.toString(),
-              name,
-            }))}
-            uniqueKey="id"
-            onSelectedItemsChange={(items) => setSelectedGameTypes(items)}
-            selectedItems={selectedGameTypes}
-            selectText="Select Game Types"
-            tagRemoveIconColor="#CCC"
-            tagBorderColor="#CCC"
-            tagTextColor="#333"
-            selectedItemTextColor="#333"
-            selectedItemIconColor="#007bff"
-            itemTextColor="#000"
-            displayKey="name"
-            searchInputStyle={styles.searchInput}
-            submitButtonColor="#007bff"
-            submitButtonText="Submit"
-            styleMainWrapper={styles.picker}
-            styleDropdownMenuSubsection={styles.pickerDropdownMenuSubsection}
-            styleTextDropdownSelected={styles.pickerTextDropdownSelected}
-            styleDropdownMenu={styles.pickerDropdownMenu}
-          />
-        </View>
-
-        <TextInput
-          style={[styles.input, { height: 80 }]}
-          placeholder="Game Description"
-          onChangeText={(text) => setGameDescription(text)}
-          value={gameDescription}
-          multiline
-        />
-
-        <View style={styles.imageContainer}>
-          {image ? (
-            <Image
-              source={{ uri: image }}
-              style={styles.image}
-              resizeMode="cover"
+      <FlatList
+        contentContainerStyle={styles.contentContainer}
+        ListHeaderComponent={
+          <>
+            <Text style={styles.title}>Add Game</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Game Name"
+              onChangeText={(text) => setGameName(text)}
+              value={gameName}
             />
-          ) : (
-            <View style={styles.placeholderImage} />
-          )}
-          <TouchableOpacity
-            style={styles.imageUploadButton}
-            onPress={handleImageUpload}
-          >
-            <Text style={styles.imageUploadButtonText}>Upload Image</Text>
-          </TouchableOpacity>
-        </View>
-
-        <TouchableOpacity style={styles.addButton} onPress={handleAddGame}>
-          <Text style={styles.addButtonLabel}>Add Game</Text>
-        </TouchableOpacity>
-      </ScrollView>
+            <View style={styles.pickerContainer}>
+              <Text style={styles.pickerLabel}>Game Types</Text>
+              <MultiSelect
+                items={gameTypes.map((name, index) => ({
+                  id: index.toString(),
+                  name,
+                }))}
+                uniqueKey="id"
+                onSelectedItemsChange={(items) => setSelectedGameTypes(items)}
+                selectedItems={selectedGameTypes}
+                selectText="Select Game Types"
+                tagRemoveIconColor="#CCC"
+                tagBorderColor="#CCC"
+                tagTextColor="#333"
+                selectedItemTextColor="#333"
+                selectedItemIconColor="#007bff"
+                itemTextColor="#000"
+                displayKey="name"
+                searchInputStyle={styles.searchInput}
+                submitButtonColor="#007bff"
+                submitButtonText="Submit"
+                styleMainWrapper={styles.picker}
+                styleDropdownMenuSubsection={styles.pickerDropdownMenuSubsection}
+                styleTextDropdownSelected={styles.pickerTextDropdownSelected}
+                styleDropdownMenu={styles.pickerDropdownMenu}
+              />
+            </View>
+            <TextInput
+              style={[styles.input, { height: 80 }]}
+              placeholder="Game Description"
+              onChangeText={(text) => setGameDescription(text)}
+              value={gameDescription}
+              multiline
+            />
+            <View style={styles.imageContainer}>
+              {image ? (
+                <Image
+                  source={{ uri: image }}
+                  style={styles.image}
+                  resizeMode="cover"
+                />
+              ) : (
+                <View style={styles.placeholderImage} />
+              )}
+              <TouchableOpacity
+                style={styles.imageUploadButton}
+                onPress={handleImageUpload}
+              >
+                <Text style={styles.imageUploadButtonText}>Upload Image</Text>
+              </TouchableOpacity>
+            </View>
+            <TouchableOpacity style={styles.addButton} onPress={handleAddGame}>
+              <Text style={styles.addButtonLabel}>Add Game</Text>
+            </TouchableOpacity>
+          </>
+        }
+        data={gameTypes.map((name, index) => ({
+          id: index.toString(),
+          name,
+        }))}
+        keyExtractor={(item) => item.id}
+      />
     </SafeAreaView>
   );
 };
@@ -277,28 +283,14 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: "#f8f8f8",
   },
+  contentContainer: {
+    paddingBottom: 20,
+  },
   title: {
     fontSize: 24,
     fontWeight: "bold",
     marginBottom: 20,
     color: "#333",
-  },
-  image: {
-    width: 200,
-    height: 200,
-    marginBottom: 20,
-  },
-  imageUploadButton: {
-    backgroundColor: "#007bff",
-    borderRadius: 5,
-    paddingVertical: 12,
-    alignItems: "center",
-    marginBottom: 10,
-  },
-  imageUploadButtonText: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "bold",
   },
   input: {
     height: 40,
@@ -340,6 +332,32 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 18,
     fontWeight: "bold",
+  },
+  imageContainer: {
+    marginBottom: 10,
+  },
+  image: {
+    width: 200,
+    height: 200,
+    marginBottom: 20,
+  },
+  imageUploadButton: {
+    backgroundColor: "#007bff",
+    borderRadius: 5,
+    paddingVertical: 12,
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  imageUploadButtonText: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  gameTypeItem: {
+    padding: 10,
+    backgroundColor: "#f0f0f0",
+    marginBottom: 5,
+    borderRadius: 5,
   },
 });
 

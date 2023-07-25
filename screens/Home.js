@@ -16,7 +16,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
-import { collection, getDocs,doc, getDoc } from "firebase/firestore";
+import { collection, getDocs, doc, getDoc } from "firebase/firestore";
 import { firestore } from "../firebaseConfig";
 import {
   inputColor,
@@ -46,10 +46,41 @@ const Home = () => {
   };
 
   useEffect(() => {
-    const filteredGames = data.filter((game) =>
-      game.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-    setFilteredData(filteredGames);
+    const fetchGames = async () => {
+      try {
+        const gamesCollectionRef = collection(firestore, "games");
+        const gamesSnapshot = await getDocs(gamesCollectionRef);
+        const gamesData = gamesSnapshot.docs.map((doc) => doc.data());
+        setData(gamesData);
+      } catch (error) {
+        console.log("Error fetching games: ", error);
+      }
+    };
+
+    fetchGames();
+  }, []);
+
+  useEffect(() => {
+    const filterGames = () => {
+      const filteredGames = data.filter((game) => {
+        // Check if the game name contains the search query
+        const gameNameMatches = game.name
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase());
+
+        // Check if the game description contains the search query
+        const gameDescriptionMatches = game.description
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase());
+
+        // Combine all the criteria
+        return gameNameMatches || gameDescriptionMatches;
+      });
+
+      setFilteredData(filteredGames);
+    };
+
+    filterGames();
   }, [data, searchQuery]);
 
   const handleRefresh = useCallback(async () => {
@@ -84,7 +115,6 @@ const Home = () => {
       setModalVisible(false);
     });
   };
-
 
   const modalTranslateX = modalAnimation.interpolate({
     inputRange: [0, 1],
@@ -207,9 +237,9 @@ const Home = () => {
         resizeMode="cover"
       >
         <View style={styles.header}>
-        <Text style={styles.greeting}>
-          {username ? `Hello, ${username}` : "Hello, please log in"}
-        </Text>
+          <Text style={styles.greeting}>
+            {username ? `Hello, ${username}` : "Hello, please log in"}
+          </Text>
           {isAuthenticated ? (
             // If authenticated, show user's profile image or placeholder image
             <TouchableOpacity onPress={openModal}>
@@ -222,12 +252,12 @@ const Home = () => {
               />
             </TouchableOpacity>
           ) : (
-            <TouchableOpacity onPress={openModal }>
-            <ImageBackground
-              source={placeholderImage}
-              style={styles.profileImage}
-              imageStyle={styles.profileImageBorder}
-            />
+            <TouchableOpacity onPress={openModal}>
+              <ImageBackground
+                source={placeholderImage}
+                style={styles.profileImage}
+                imageStyle={styles.profileImageBorder}
+              />
             </TouchableOpacity>
           )}
         </View>

@@ -82,7 +82,7 @@ const SignupScreen = () => {
       });
       if (!result.canceled) {
         const { assets } = result;
-        const selectedAsset = assets[0]; // Assuming we only pick one image
+        const selectedAsset = assets[0]; // only pick one image
         const { uri } = selectedAsset;
         setPicture(uri); // Set the profile picture URI to the 'picture' state
         await uploadImage(uri); // Upload the image to Firebase Storage

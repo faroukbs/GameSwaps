@@ -28,6 +28,9 @@ const UserProfileScreen = () => {
   const [imageUrl, setImageUrl] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [editName, setEditName] = useState(false);
+  const [editLastName, setEditLastName] = useState(false);
+  const [editEmail, setEditEmail] = useState(false);
   const navigation = useNavigation();
   const storage = getStorage();
 
@@ -118,11 +121,16 @@ const UserProfileScreen = () => {
           const userCollectionRef = collection(firestore, "users");
           const userDocRef = doc(userCollectionRef, currentUser.uid);
           await updateDoc(userDocRef, {
-            picture: downloadUrl, // Update Firestore field "picture"
+            picture: downloadUrl,
+            name: user.name,
+            lastName: user.lastName,
+            email: user.email,
           });
 
           console.log("Profile updated successfully!");
-          // Optionally, you can show a success message using a modal or Toast here
+          setEditName(false);
+          setEditLastName(false);
+          setEditEmail(false);
         }
       }
 
@@ -135,6 +143,13 @@ const UserProfileScreen = () => {
     }
   };
 
+  const handleCancelEdit = () => {
+    // Reset the user state to discard changes and disable edit mode
+    setUser((prevUser) => ({ ...prevUser }));
+    setEditName(false);
+    setEditLastName(false);
+    setEditEmail(false);
+  };
   const handleSignOut = async () => {
     try {
       const authInstance = getAuth();
@@ -178,7 +193,6 @@ const UserProfileScreen = () => {
       </TouchableOpacity>
       <Text style={styles.username}>{user.username}</Text>
       <Text style={styles.email}>{user.email}</Text>
-
       <View style={styles.userInfoContainer}>
         <Text style={styles.userInfoLabel}>Name:</Text>
         <Text style={styles.userInfo}>{user.name}</Text>

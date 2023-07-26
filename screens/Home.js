@@ -45,6 +45,10 @@ const Home = () => {
     navigation.navigate("GameDetailScreen", { item });
   };
 
+  const handleNavigateToUserProfile = () => {
+    navigation.navigate("UserProfileScreen", { userId: "replace_with_user_id_here" });
+  };
+
   useEffect(() => {
     const fetchGames = async () => {
       try {
@@ -312,7 +316,7 @@ const Home = () => {
               </View>
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={closeModal}>
+            <TouchableOpacity onPress={handleNavigateToUserProfile}>
               <View style={styles.modalItem}>
                 <Ionicons
                   name="person-outline"

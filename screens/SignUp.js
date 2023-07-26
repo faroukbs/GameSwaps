@@ -144,6 +144,7 @@ const SignupScreen = () => {
         phoneNumber,
         location: {
           country: country?.name || "",
+          countryCode: country?.cca2 || "",
         },
         birthdate,
         interests: selectedInterests,

@@ -9,8 +9,9 @@ import {
   ImageBackground,
   ScrollView,
   Alert,
-  Linking,
+  Modal,
   Image,
+  FlatList,
 } from "react-native";
 import {
   primaryColor,
@@ -28,7 +29,7 @@ import {
   sendEmailVerification,
   updateProfile,
 } from "firebase/auth";
-import { doc, setDoc, collection,getDocs } from "firebase/firestore";
+import { doc, setDoc, collection, getDocs } from "firebase/firestore";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { firestore } from "../firebaseConfig";
 import CountryPickerModal from "react-native-country-picker-modal";
@@ -53,6 +54,7 @@ const SignupScreen = () => {
   const [imageUrl, setImageUrl] = useState(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showCountryPicker, setShowCountryPicker] = useState(false);
+  const [showInterestsModal, setShowInterestsModal] = useState(false);
   const navigation = useNavigation();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0)).current;
@@ -71,7 +73,6 @@ const SignupScreen = () => {
       }),
     ]).start();
   }, [fadeAnim, scaleAnim]);
-
 
   const handleImageUpload = async () => {
     try {
@@ -308,7 +309,7 @@ const SignupScreen = () => {
               >
                 <Ionicons
                   name={showPassword ? "eye-off" : "eye"}
-                  size={24}
+                  size={20}
                   color="#000"
                 />
               </TouchableOpacity>
@@ -364,17 +365,28 @@ const SignupScreen = () => {
                 style={styles.icon}
               />
               <TouchableOpacity
-                style={[styles.input, styles.countryPicker]}
+                style={[styles.input, styles.countryPicker]} // Merge the countryPicker styles with input styles
                 onPress={() => setShowCountryPicker(true)}
               >
-                {country && (
-                  <View style={styles.countryContainer}>
-                    <Text style={styles.countryName}>{country.name}</Text>
-                  </View>
-                )}
+                <CountryPickerModal
+                  visible={showCountryPicker}
+                  onClose={() => setShowCountryPicker(false)}
+                  onSelect={(country) => {
+                    setCountry(country);
+                    setCountryCode(country.cca2);
+                    setShowCountryPicker(false);
+                  }}
+                  withFilter
+                  withCountryNameButton
+                  withCallingCodeButton
+                  withAlphaFilter
+                  withCallingCode
+                  countryCode={countryCode}
+                />
                 {!country && (
                   <Text style={styles.countryPlaceholder}>Select Country</Text>
                 )}
+            
               </TouchableOpacity>
             </View>
             <TouchableOpacity
@@ -403,38 +415,73 @@ const SignupScreen = () => {
                 onCancel={() => setShowDatePicker(false)}
               />
             )}
-            <View style={styles.pickerContainer}>
-              <Ionicons
-                name="heart-outline"
-                size={24}
-                color="#000"
-                style={styles.icon}
-              />
-          <MultiSelect
-            items={interests.map((name, index) => ({
-              id: index.toString(),
-              name,
-            }))}
-            uniqueKey="id"
-            onSelectedItemsChange={(items) => setSelectedInterests(items)}
-            selectedItems={selectedInterests}
-            selectText="Select Interests Types"
-            tagRemoveIconColor="#CCC"
-            tagBorderColor="#CCC"
-            tagTextColor="#333"
-            selectedItemTextColor="#333"
-            selectedItemIconColor="#007bff"
-            itemTextColor="#000"
-            displayKey="name"
-            searchInputStyle={styles.searchInput}
-            submitButtonColor="#007bff"
-            submitButtonText="Submit"
-            styleMainWrapper={styles.picker}
-            styleDropdownMenuSubsection={styles.pickerDropdownMenuSubsection}
-            styleTextDropdownSelected={styles.pickerTextDropdownSelected}
-            styleDropdownMenu={styles.pickerDropdownMenu}
-          />
+            <View style={styles.inputContainer}>
+              <Ionicons name="heart-outline" size={24} color="#000" />
+              <View style={styles.interestsPickerContainer}>
+                <TouchableOpacity
+                  style={styles.interestsPickerIcon}
+                  onPress={() => setShowInterestsModal(true)}
+                >
+                  <Text style={styles.interestsPickerIconText}>
+                    {selectedInterests && selectedInterests.length === 0
+                      ? "Select Interests"
+                      : `${selectedInterests.length}`}
+                  </Text>
+                </TouchableOpacity>
+                {selectedInterests && selectedInterests.length > 0 && (
+                  <TouchableOpacity onPress={() => setShowInterestsModal(true)}>
+                    <Text style={styles.countryName}>
+                      {selectedInterests.join(", ")}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </View>
             </View>
+
+            {/* Modal to show the interests dropdown */}
+            <Modal
+              visible={showInterestsModal}
+              animationType="slide"
+              transparent={true}
+              onRequestClose={() => setShowInterestsModal(false)}
+            >
+              <View style={styles.modalContainer}>
+                <View style={styles.modalContent}>
+                  <FlatList
+                    data={interests}
+                    keyExtractor={(item, index) => index.toString()}
+                    renderItem={({ item }) => (
+                      <TouchableOpacity
+                        style={[
+                          styles.modalItem,
+                          selectedInterests.includes(item) &&
+                            styles.modalItemSelected,
+                        ]}
+                        onPress={() => {
+                          if (selectedInterests.includes(item)) {
+                            setSelectedInterests(
+                              selectedInterests.filter(
+                                (interest) => interest !== item
+                              )
+                            );
+                          } else {
+                            setSelectedInterests([...selectedInterests, item]);
+                          }
+                        }}
+                      >
+                        <Text style={styles.modalItemText}>{item}</Text>
+                      </TouchableOpacity>
+                    )}
+                  />
+                </View>
+                <TouchableOpacity
+                  style={styles.modalDoneButton}
+                  onPress={() => setShowInterestsModal(false)}
+                >
+                  <Text style={styles.modalDoneButtonText}>Done</Text>
+                </TouchableOpacity>
+              </View>
+            </Modal>
             <TouchableOpacity
               style={styles.button}
               onPress={handleSignup} // Use handleSignup function here
@@ -452,22 +499,6 @@ const SignupScreen = () => {
           </TouchableOpacity>
         </View>
       </ScrollView>
-
-      <CountryPickerModal
-        visible={showCountryPicker}
-        onClose={() => setShowCountryPicker(false)}
-        onSelect={(country) => {
-          setCountry(country);
-          setCountryCode(country.cca2);
-          setShowCountryPicker(false);
-        }}
-        withFilter
-        withCountryNameButton
-        withCallingCodeButton
-        withAlphaFilter
-        withCallingCode
-        countryCode={countryCode}
-      />
     </ImageBackground>
   );
 };
@@ -520,7 +551,8 @@ const styles = StyleSheet.create({
     color: "#fff",
   },
   showPasswordButton: {
-    marginLeft: -30,
+    marginLeft: -40,
+    paddingHorizontal: 10,
   },
   profilePictureContainer: {
     width: 140,
@@ -569,8 +601,6 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
   },
-
-
   button: {
     width: "100%",
     height: 40,
@@ -668,6 +698,66 @@ const styles = StyleSheet.create({
   },
   pickerDropdownMenu: {
     marginTop: 1,
+  },
+  interestsPickerContainer: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginLeft: 10,
+    paddingHorizontal: 10,
+    backgroundColor: inputColor,
+    borderRadius: 5,
+  },
+  interestsPickerIcon: {
+    flex: 1,
+    paddingVertical: 10,
+  },
+  interestsPickerIconText: {
+    fontSize: 16,
+    color: "#808080",
+    maxHeight: 40,
+    justifyContent: "center",
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  modalContent: {
+    backgroundColor: "#fff",
+    borderRadius: 5,
+    padding: 10,
+    maxHeight: "80%",
+    width: "80%",
+    overflow: "hidden",
+  },
+  modalItem: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ccc",
+  },
+  modalItemSelected: {
+    backgroundColor: "#6ef077",
+    textShadowColor: "#000",
+  },
+  modalItemText: {
+    fontSize: 16,
+    color: "#333",
+  },
+  modalDoneButton: {
+    backgroundColor: "#007bff",
+    paddingVertical: 12,
+    marginTop: 10,
+    borderRadius: 5,
+    width: "80%",
+    alignItems: "center",
+  },
+  modalDoneButtonText: {
+    color: "#fff",
+    fontSize: 16,
   },
 });
 

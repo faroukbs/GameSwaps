@@ -10,6 +10,7 @@ import {
   FlatList,
   Platform,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import { collection, addDoc, getDocs } from "firebase/firestore";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
@@ -31,6 +32,7 @@ const GameAddingScreen = () => {
   const [image, setImage] = useState(null);
   const [imageUrl, setImageUrl] = useState(null);
   const auth = getAuth();
+  const [loading, setLoading] = useState(false);
   const [user, setUser] = useState(null);
   const navigation = useNavigation();
   const showLoginPrompt = () => {
@@ -90,12 +92,19 @@ const GameAddingScreen = () => {
         return;
       }
 
+      if (!image) {
+        Alert.alert("Error", "Please upload an image for the game.");
+        return;
+      }
+
+      setLoading(true); // Show loading indicator during image upload
+
       const gameData = {
         name: gameName,
         types: selectedGameTypes,
         description: gameDescription,
         imageUrl: imageUrl,
-        userId: user.uid, 
+        userId: user.uid,
       };
       const docRef = await addDoc(collection(firestore, "games"), gameData);
 
@@ -136,6 +145,7 @@ const GameAddingScreen = () => {
     } catch (error) {
       console.log("Error adding game: ", error);
     }
+    setLoading(false);
   };
 
   const sendPushNotification = async (expoPushToken, title, body) => {
@@ -233,7 +243,9 @@ const GameAddingScreen = () => {
                 submitButtonColor="#007bff"
                 submitButtonText="Submit"
                 styleMainWrapper={styles.picker}
-                styleDropdownMenuSubsection={styles.pickerDropdownMenuSubsection}
+                styleDropdownMenuSubsection={
+                  styles.pickerDropdownMenuSubsection
+                }
                 styleTextDropdownSelected={styles.pickerTextDropdownSelected}
                 styleDropdownMenu={styles.pickerDropdownMenu}
               />
@@ -262,8 +274,16 @@ const GameAddingScreen = () => {
                 <Text style={styles.imageUploadButtonText}>Upload Image</Text>
               </TouchableOpacity>
             </View>
-            <TouchableOpacity style={styles.addButton} onPress={handleAddGame}>
-              <Text style={styles.addButtonLabel}>Add Game</Text>
+            <TouchableOpacity
+              style={styles.addButton}
+              onPress={handleAddGame}
+              disabled={loading} // Disable the button while uploading
+            >
+              {loading ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <Text style={styles.addButtonLabel}>Add Game</Text>
+              )}
             </TouchableOpacity>
           </>
         }

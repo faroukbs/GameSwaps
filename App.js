@@ -7,6 +7,7 @@ import ForgotPassword from "./screens/ForgotPassword";
 import GameAddingScreen from "./screens/GameAddingScreen";
 import GameDetailScreen from "./screens/GameDetailScreen";
 import UserProfileScreen from "./screens/UserProfileScreen";
+import UserPostedGamesScreen from "./screens/UserPostedGamesScreen";
 const Stack = createNativeStackNavigator();
 
 export default function App() {
@@ -32,6 +33,7 @@ export default function App() {
         <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
         <Stack.Screen name="GameAddingScreen" component={GameAddingScreen} />
         <Stack.Screen name="UserProfileScreen" component={UserProfileScreen} />
+        <Stack.Screen name="UserPostedGamesScreen" component={UserPostedGamesScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

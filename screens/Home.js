@@ -46,7 +46,7 @@ const Home = () => {
   };
 
   const handleNavigateToUserProfile = () => {
-    navigation.navigate("UserProfileScreen", { userId: "replace_with_user_id_here" });
+    navigation.navigate("UserProfileScreen", { userId: "userid" });
   };
 
   useEffect(() => {

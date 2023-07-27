@@ -10,7 +10,7 @@ import {
   RefreshControl,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { getAuth, updateProfile } from "firebase/auth";
+import { getAuth } from "firebase/auth";
 import { collection, doc, getDoc, updateDoc } from "firebase/firestore";
 import {
   getStorage,
@@ -28,11 +28,12 @@ const UserProfileScreen = () => {
   const [imageUrl, setImageUrl] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [editName, setEditName] = useState(false);
-  const [editLastName, setEditLastName] = useState(false);
-  const [editEmail, setEditEmail] = useState(false);
   const navigation = useNavigation();
   const storage = getStorage();
+
+  const handleNavigationToGamesList = () => {
+    navigation.navigate("UserPostedGamesScreen");
+  };
 
   useEffect(() => {
     // Fetch user data from Firestore when the component mounts
@@ -113,11 +114,10 @@ const UserProfileScreen = () => {
           await deleteObject(oldPictureRef);
         }
 
-        // Update Firestore field "picture" with the new profile picture URL
         const authInstance = getAuth();
         const currentUser = authInstance.currentUser;
         if (currentUser) {
-          // Update the user data in Firestore with the new picture URL
+          // Update the user data in Firestore
           const userCollectionRef = collection(firestore, "users");
           const userDocRef = doc(userCollectionRef, currentUser.uid);
           await updateDoc(userDocRef, {
@@ -128,13 +128,8 @@ const UserProfileScreen = () => {
           });
 
           console.log("Profile updated successfully!");
-          setEditName(false);
-          setEditLastName(false);
-          setEditEmail(false);
         }
       }
-
-      // ... (previous code for updating profile data)
     } catch (error) {
       console.log("Error updating profile: ", error);
     } finally {
@@ -143,13 +138,6 @@ const UserProfileScreen = () => {
     }
   };
 
-  const handleCancelEdit = () => {
-    // Reset the user state to discard changes and disable edit mode
-    setUser((prevUser) => ({ ...prevUser }));
-    setEditName(false);
-    setEditLastName(false);
-    setEditEmail(false);
-  };
   const handleSignOut = async () => {
     try {
       const authInstance = getAuth();
@@ -206,6 +194,12 @@ const UserProfileScreen = () => {
         <Text style={styles.userInfo}>{user.phoneNumber}</Text>
       </View>
 
+      <TouchableOpacity
+        style={styles.button}
+        onPress={handleNavigationToGamesList}
+      >
+        <Text style={styles.buttonText}>My List of Games</Text>
+      </TouchableOpacity>
       <TouchableOpacity style={styles.button} onPress={handleUpdateProfile}>
         <Text style={styles.buttonText}>Update Profile</Text>
       </TouchableOpacity>

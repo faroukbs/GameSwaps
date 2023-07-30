@@ -16,7 +16,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
-import { collection, getDocs, doc, getDoc } from "firebase/firestore";
+import { collection, getDocs, doc, getDoc, onSnapshot } from "firebase/firestore";
 import { firestore } from "../firebaseConfig";
 import {
   inputColor,
@@ -148,8 +148,7 @@ const Home = () => {
         getDoc(userProfileRef)
           .then((snapshot) => {
             if (snapshot.exists()) {
-              // Assuming you have stored the profile image URL in the 'profileImageUrl' field
-              const profileImageUrl = snapshot.data().profileImageUrl;
+              const profileImageUrl = snapshot.data().picture;
               setProfileImageUrl(profileImageUrl);
             } else {
               // Handle the case when the user profile data doesn't exist
@@ -164,6 +163,23 @@ const Home = () => {
       }
       setLoading(false);
     });
+
+    return () => unsubscribe();
+  }, [auth]);
+
+  // Update user profile image when the user data changes
+  useEffect(() => {
+    const unsubscribe = onSnapshot(
+      doc(firestore, "users", auth.currentUser?.uid),
+      (snapshot) => {
+        if (snapshot.exists()) {
+          const newProfileImageUrl = snapshot.data().picture;
+          setProfileImageUrl(newProfileImageUrl);
+        } else {
+          // Handle the case when the user profile data doesn't exist
+        }
+      }
+    );
 
     return () => unsubscribe();
   }, [auth]);
@@ -240,6 +256,7 @@ const Home = () => {
         style={styles.backgroundImage}
         resizeMode="cover"
       >
+        <TouchableOpacity onPress={closeModal}>
         <View style={styles.header}>
           <Text style={styles.greeting}>
             {username ? `Hello, ${username}` : "Hello, please log in"}
@@ -249,7 +266,9 @@ const Home = () => {
             <TouchableOpacity onPress={openModal}>
               <ImageBackground
                 source={
-                  profileImageUrl ? { uri: profileImageUrl } : placeholderImage
+                  profileImageUrl
+                    ? { uri: profileImageUrl }
+                    : require("../assets/profileimg.jpg")
                 }
                 style={styles.profileImage}
                 imageStyle={styles.profileImageBorder}
@@ -258,13 +277,14 @@ const Home = () => {
           ) : (
             <TouchableOpacity onPress={openModal}>
               <ImageBackground
-                source={placeholderImage}
+                source={require("../assets/profileimg.jpg")}
                 style={styles.profileImage}
                 imageStyle={styles.profileImageBorder}
               />
             </TouchableOpacity>
           )}
         </View>
+        </TouchableOpacity>
         <View style={styles.searchBar}>
           <Ionicons name="search" size={20} color={inputColor} />
           <TextInput
@@ -293,15 +313,15 @@ const Home = () => {
           />
         </SafeAreaView>
         {modalVisible && (
-          <Animated.View
-            style={[
-              styles.modalContainer,
-              {
-                opacity: modalOpacity,
-                transform: [{ translateX: modalTranslateX }],
-              },
-            ]}
-          >
+        <Animated.View
+          style={[
+            styles.modalContainer,
+            {
+              opacity: modalOpacity,
+              transform: [{ translateX: modalTranslateX }],
+            },
+          ]}
+        >
             <TouchableOpacity onPress={handleAuthentication}>
               <View style={styles.modalItem}>
                 <Ionicons
@@ -359,13 +379,14 @@ const styles = StyleSheet.create({
   },
   backgroundImage: {
     flex: 1,
+    
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 20,
     paddingHorizontal: 20,
-    paddingTop: 20,
+    paddingTop: 30,
   },
   greeting: {
     fontSize: 16,
@@ -374,8 +395,8 @@ const styles = StyleSheet.create({
     color: textColor,
   },
   profileImage: {
-    width: 35,
-    height: 35,
+    width: 50,
+    height: 50,
   },
   profileImageBorder: {
     borderRadius: 25,

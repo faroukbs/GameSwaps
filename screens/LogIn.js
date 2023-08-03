@@ -18,6 +18,7 @@ import {
 } from "../color";
 import { useNavigation } from "@react-navigation/native";
 import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
+import { Ionicons } from "@expo/vector-icons";
 
 const LoginScreen = () => {
   const [email, setEmail] = useState("");
@@ -28,6 +29,10 @@ const LoginScreen = () => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0)).current;
   const errorMessageAnim = useRef(new Animated.Value(0)).current;
+
+  const handleNavigateToHome = () => {
+    navigation.navigate("Home");
+  };
 
   useEffect(() => {
     Animated.parallel([
@@ -202,6 +207,12 @@ const LoginScreen = () => {
         >
           <Text style={styles.errorMessageText}>{errorMessage}</Text>
         </Animated.View>
+        <TouchableOpacity
+          style={styles.homeButton}
+          onPress={handleNavigateToHome}
+        >
+          <Ionicons name="home-outline" size={24} color="#fff" />
+        </TouchableOpacity>
       </View>
     </ImageBackground>
   );
@@ -286,6 +297,12 @@ const styles = StyleSheet.create({
   errorMessageText: {
     color: "#fff",
     textAlign: "center",
+  },
+  homeButton: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    padding: 10,
   },
 });
 

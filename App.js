@@ -15,14 +15,14 @@ export default function App() {
     <NavigationContainer>
       <Stack.Navigator screenOptions={screenOptions}>
         <Stack.Screen
-          name="Home"
-          component={Home}
+          name="LoginScreen"
+          component={LogIn}
           options={{ headerShown: false }}
         />
         <Stack.Screen
-          name="LoginScreen"
-          component={LogIn}
-          options={{ headerShown: false}}
+          name="Home"
+          component={Home}
+          options={{ headerShown: false }}
         />
         <Stack.Screen
           name="SignupScreen"
@@ -33,7 +33,10 @@ export default function App() {
         <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
         <Stack.Screen name="GameAddingScreen" component={GameAddingScreen} />
         <Stack.Screen name="UserProfileScreen" component={UserProfileScreen} />
-        <Stack.Screen name="UserPostedGamesScreen" component={UserPostedGamesScreen} />
+        <Stack.Screen
+          name="UserPostedGamesScreen"
+          component={UserPostedGamesScreen}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );

@@ -1,8 +1,8 @@
 diff --git a/node_modules/react-native/index.js b/node_modules/react-native/index.js
-index f556fa3..f800779 100644
+index f556fa3..6477fe4 100644
 --- a/node_modules/react-native/index.js
 +++ b/node_modules/react-native/index.js
-@@ -441,13 +441,6 @@ module.exports = {
+@@ -441,15 +441,9 @@ module.exports = {
      return require('deprecated-react-native-prop-types').PointPropType;
    },
    get ViewPropTypes(): $FlowFixMe {
@@ -13,6 +13,10 @@ index f556fa3..f800779 100644
 -        'continue using ViewPropTypes, migrate to the ' +
 -        "'deprecated-react-native-prop-types' package.",
 -    );
-     return require('deprecated-react-native-prop-types').ViewPropTypes;
+-    return require('deprecated-react-native-prop-types').ViewPropTypes;
++    return require("deprecated-react-native-prop-types").ViewPropTypes
    },
++
  };
+ 
+ if (__DEV__) {

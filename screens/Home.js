@@ -16,7 +16,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
-import { collection, getDocs, doc, getDoc, onSnapshot } from "firebase/firestore";
+import { collection, getDocs, doc, getDoc } from "firebase/firestore";
 import { firestore } from "../firebaseConfig";
 import {
   inputColor,
@@ -151,7 +151,7 @@ const Home = () => {
               const profileImageUrl = snapshot.data().picture;
               setProfileImageUrl(profileImageUrl);
             } else {
-              // Handle the case when the user profile data doesn't exist
+              console.log("User profile does not exist");
             }
           })
           .catch((error) => {
@@ -163,23 +163,6 @@ const Home = () => {
       }
       setLoading(false);
     });
-
-    return () => unsubscribe();
-  }, [auth]);
-
-  // Update user profile image when the user data changes
-  useEffect(() => {
-    const unsubscribe = onSnapshot(
-      doc(firestore, "users", auth.currentUser?.uid),
-      (snapshot) => {
-        if (snapshot.exists()) {
-          const newProfileImageUrl = snapshot.data().picture;
-          setProfileImageUrl(newProfileImageUrl);
-        } else {
-          // Handle the case when the user profile data doesn't exist
-        }
-      }
-    );
 
     return () => unsubscribe();
   }, [auth]);
@@ -277,7 +260,7 @@ const Home = () => {
           ) : (
             <TouchableOpacity onPress={openModal}>
               <ImageBackground
-                source={require("../assets/profileimg.jpg")}
+                source={placeholderImage}
                 style={styles.profileImage}
                 imageStyle={styles.profileImageBorder}
               />
@@ -313,15 +296,15 @@ const Home = () => {
           />
         </SafeAreaView>
         {modalVisible && (
-        <Animated.View
-          style={[
-            styles.modalContainer,
-            {
-              opacity: modalOpacity,
-              transform: [{ translateX: modalTranslateX }],
-            },
-          ]}
-        >
+          <Animated.View
+            style={[
+              styles.modalContainer,
+              {
+                opacity: modalOpacity,
+                transform: [{ translateX: modalTranslateX }],
+              },
+            ]}
+          >
             <TouchableOpacity onPress={handleAuthentication}>
               <View style={styles.modalItem}>
                 <Ionicons
@@ -379,14 +362,13 @@ const styles = StyleSheet.create({
   },
   backgroundImage: {
     flex: 1,
-    
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 20,
     paddingHorizontal: 20,
-    paddingTop: 30,
+    paddingTop: 20, // Changed from 30 to 20
   },
   greeting: {
     fontSize: 16,
@@ -395,8 +377,8 @@ const styles = StyleSheet.create({
     color: textColor,
   },
   profileImage: {
-    width: 50,
-    height: 50,
+    width: 35, // Changed from 50 to 35
+    height: 35, // Changed from 50 to 35
   },
   profileImageBorder: {
     borderRadius: 25,

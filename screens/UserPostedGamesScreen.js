@@ -1,10 +1,15 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState,useContext } from "react";
 import { View, Text, FlatList, Image, StyleSheet } from "react-native";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
-import { firestore, auth } from "../firebaseConfig"; // Importing the firestore and auth instances
+import { firestore, auth } from "../firebaseConfig"; 
+import { useTranslation } from "react-i18next";
+import combinedTranslations from "../translate/combinedTranslations";
+import { LanguageContext } from "../translate/LanguageContext";
 
 const UserPostedGamesScreen = () => {
   const [postedGames, setPostedGames] = useState([]);
+  const { t } = useTranslation("ViewList", { translations: combinedTranslations });
+  const { changeLanguage } = useContext(LanguageContext);
 
   useEffect(() => {
     // Get the authenticated user's ID
@@ -44,7 +49,7 @@ const UserPostedGamesScreen = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>List of Posted Games</Text>
+      <Text style={styles.header}>{t("viewGameList")}</Text>
       <FlatList
         data={postedGames}
         renderItem={renderItem}

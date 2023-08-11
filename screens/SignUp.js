@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useContext } from "react";
 import {
   View,
   TextInput,
@@ -33,8 +33,9 @@ import { doc, setDoc, collection, getDocs } from "firebase/firestore";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { firestore } from "../firebaseConfig";
 import CountryPickerModal from "react-native-country-picker-modal";
-import MultiSelect from "react-native-multiple-select";
-
+import { useTranslation } from "react-i18next";
+import combinedTranslations from "../translate/combinedTranslations";
+import { LanguageContext } from "../translate/LanguageContext";
 const storage = getStorage();
 
 const SignupScreen = () => {
@@ -47,7 +48,7 @@ const SignupScreen = () => {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [countryCode, setCountryCode] = useState("");
   const [country, setCountry] = useState(null);
-  const [birthdate, setBirthdate] = useState(new Date());
+  const [birthdate, setBirthdate] = useState(null);
   const [interests, setInterests] = useState([]);
   const [selectedInterests, setSelectedInterests] = useState([]);
   const [picture, setPicture] = useState(null);
@@ -58,6 +59,9 @@ const SignupScreen = () => {
   const navigation = useNavigation();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0)).current;
+  const { t } = useTranslation("signup", { translations: combinedTranslations });
+  const { changeLanguage } = useContext(LanguageContext);
+
 
   useEffect(() => {
     Animated.parallel([
@@ -186,13 +190,11 @@ const SignupScreen = () => {
   };
 
   const formatDateString = (date) => {
-    if (!date) {
-      return "DD/MM/YYYY"; // Placeholder value
+    if (date) {
+      return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
+    } else {
+      return t('choosedate');
     }
-    const day = date.getDate().toString().padStart(2, "0");
-    const month = (date.getMonth() + 1).toString().padStart(2, "0");
-    const year = date.getFullYear().toString();
-    return `${day}/${month}/${year}`;
   };
 
   useEffect(() => {
@@ -225,7 +227,7 @@ const SignupScreen = () => {
           ]}
         >
           <View>
-            <Text style={styles.title}>Create Account</Text>
+            <Text style={styles.title}>{t("createAccount")}</Text>
             <View style={styles.profilePictureContainer}>
               {picture ? (
                 <TouchableOpacity
@@ -270,7 +272,7 @@ const SignupScreen = () => {
               />
               <TextInput
                 style={styles.input}
-                placeholder="Username"
+                placeholder={t("usernamePlaceholder")}
                 onChangeText={(text) => setUsername(text)}
                 value={username}
               />
@@ -284,7 +286,7 @@ const SignupScreen = () => {
               />
               <TextInput
                 style={styles.input}
-                placeholder="Email"
+                placeholder={t("emailPlaceholder")}
                 onChangeText={(text) => setEmail(text)}
                 value={email}
               />
@@ -298,7 +300,7 @@ const SignupScreen = () => {
               />
               <TextInput
                 style={styles.input}
-                placeholder="Password"
+                placeholder={t("passwordPlaceholder")}
                 secureTextEntry={!showPassword}
                 onChangeText={(text) => setPassword(text)}
                 value={password}
@@ -323,7 +325,7 @@ const SignupScreen = () => {
               />
               <TextInput
                 style={styles.input}
-                placeholder="First Name"
+                placeholder={t("firstNamePlaceholder")}
                 onChangeText={(text) => setName(text)}
                 value={name}
               />
@@ -337,7 +339,7 @@ const SignupScreen = () => {
               />
               <TextInput
                 style={styles.input}
-                placeholder="Last Name"
+                placeholder={t("lastNamePlaceholder")}
                 onChangeText={(text) => setLastName(text)}
                 value={lastName}
               />
@@ -351,7 +353,7 @@ const SignupScreen = () => {
               />
               <TextInput
                 style={styles.input}
-                placeholder="Phone Number"
+                placeholder={t("PhoneNumberPlaceholder")}
                 onChangeText={(text) => setPhoneNumber(text)}
                 value={phoneNumber}
                 keyboardType="phone-pad"
@@ -382,11 +384,12 @@ const SignupScreen = () => {
                   withAlphaFilter
                   withCallingCode
                   countryCode={countryCode}
+                  placeholder={t("selectCountryPlaceholder")}
                 />
                 {!country && (
-                  <Text style={styles.countryPlaceholder}>Select Country</Text>
+                  <Text style={styles.countryPlaceholder}></Text>
                 )}
-            
+
               </TouchableOpacity>
             </View>
             <TouchableOpacity
@@ -399,9 +402,15 @@ const SignupScreen = () => {
                 color="#000"
                 style={styles.icon}
               />
-              <Text style={styles.datePickerText}>
+              <Text
+                style={[
+                  styles.datePickerText,
+                  formatDateString === t("choosedate") && styles.placeholderDateText,
+                ]}
+              >
                 {formatDateString(birthdate)}
               </Text>
+
             </TouchableOpacity>
             {showDatePicker && (
               <DateTimePickerModal
@@ -424,7 +433,7 @@ const SignupScreen = () => {
                 >
                   <Text style={styles.interestsPickerIconText}>
                     {selectedInterests && selectedInterests.length === 0
-                      ? "Select Interests"
+                      ? t("selectInterestsPlaceholder")
                       : `${selectedInterests.length}`}
                   </Text>
                 </TouchableOpacity>
@@ -455,7 +464,7 @@ const SignupScreen = () => {
                         style={[
                           styles.modalItem,
                           selectedInterests.includes(item) &&
-                            styles.modalItemSelected,
+                          styles.modalItemSelected,
                         ]}
                         onPress={() => {
                           if (selectedInterests.includes(item)) {
@@ -487,15 +496,17 @@ const SignupScreen = () => {
               onPress={handleSignup} // Use handleSignup function here
               activeOpacity={0.7}
             >
-              <Text style={styles.buttonText}>Sign Up</Text>
+              <Text style={styles.buttonText}>{t('signUp')}</Text>
             </TouchableOpacity>
           </View>
         </Animated.View>
 
         <View style={styles.footer}>
-          <Text style={styles.footerText}>Already have an account? </Text>
+          <Text style={styles.footerText}>
+            {t("alreadyHaveAccountLabel")}
+          </Text>
           <TouchableOpacity onPress={() => navigation.navigate("LoginScreen")}>
-            <Text style={[styles.footerText, styles.footerLink]}>Log in</Text>
+            <Text style={[styles.footerText, styles.footerLink]}>{t("loginLabel")}</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -758,6 +769,9 @@ const styles = StyleSheet.create({
   modalDoneButtonText: {
     color: "#fff",
     fontSize: 16,
+  },
+  placeholderDateText: {
+    color: "#808080", // Placeholder color
   },
 });
 

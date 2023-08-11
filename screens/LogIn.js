@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useContext } from "react";
 import {
   View,
   TextInput,
@@ -19,8 +19,13 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
 import { Ionicons } from "@expo/vector-icons";
+import { useTranslation } from "react-i18next";
+import combinedTranslations from "../translate/combinedTranslations";
+import { LanguageContext } from "../translate/LanguageContext";
 
 const LoginScreen = () => {
+  const { t } = useTranslation("login", { translations: combinedTranslations });
+  const { changeLanguage } = useContext(LanguageContext);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -52,17 +57,17 @@ const LoginScreen = () => {
   const handleLogin = () => {
     // Input validation
     if (!isValidEmail(email)) {
-      setErrorMessage("Please enter a valid email address.");
+      setErrorMessage(t("invalidEmail"));
       animateErrorMessage();
       return;
     }
-  
+
     if (!isValidPassword(password)) {
-      setErrorMessage("Password must be at least 6 characters long.");
+      setErrorMessage(t("invalidPassword"));
       animateErrorMessage();
       return;
     }
-  
+
     const authInstance = getAuth();
     signInWithEmailAndPassword(authInstance, email, password)
       .then((userCredential) => {
@@ -72,7 +77,7 @@ const LoginScreen = () => {
           navigation.navigate("Home");
         } else {
           // User's email is not verified
-          setErrorMessage("Please verify your email address before logging in.");
+          setErrorMessage(t("verifyEmail"));
           animateErrorMessage();
         }
       })
@@ -80,16 +85,16 @@ const LoginScreen = () => {
         console.log(error);
         // Handle login error and display appropriate error message
         if (error.code === "auth/wrong-password") {
-          setErrorMessage("Incorrect password. Please try again.");
+          setErrorMessage(t("incorrectPassword"));
           animateErrorMessage();
         } else if (
           error.code === "auth/invalid-email" ||
           error.code === "auth/user-not-found"
         ) {
-          setErrorMessage("Invalid credentials. Please try again.");
+          setErrorMessage(t("invalidCredentials"));
           animateErrorMessage();
         } else {
-          setErrorMessage("An error occurred. Please try again later.");
+          setErrorMessage(t("loginError"));
           animateErrorMessage();
         }
       });
@@ -142,14 +147,14 @@ const LoginScreen = () => {
         >
           <TextInput
             style={styles.input}
-            placeholder="Email"
+            placeholder={t("emailPlaceholder")}
             onChangeText={(text) => setEmail(text)}
             value={email}
           />
           <View style={styles.passwordContainer}>
             <TextInput
               style={styles.input}
-              placeholder="Password"
+              placeholder={t("passwordPlaceholder")}
               secureTextEntry={!showPassword}
               onChangeText={(text) => setPassword(text)}
               value={password}
@@ -170,7 +175,7 @@ const LoginScreen = () => {
             onPress={handleLogin}
             activeOpacity={0.7}
           >
-            <Text style={styles.buttonText}>Login</Text>
+            <Text style={styles.buttonText}>{t("loginButton")}</Text>
           </TouchableOpacity>
           <View style={styles.authIconsContainer}>
             <TouchableOpacity style={styles.authIcon}>
@@ -183,10 +188,10 @@ const LoginScreen = () => {
         </Animated.View>
         <View style={styles.bottomContainer}>
           <TouchableOpacity onPress={() => navigation.navigate("SignupScreen")}>
-            <Text style={styles.bottomText}>Create Account</Text>
+            <Text style={styles.bottomText}>{t("createAccount")}</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={handleForgotPassword}>
-            <Text style={styles.bottomText}>Forgot Password</Text>
+            <Text style={styles.bottomText}>{t("forgotPassword")}</Text>
           </TouchableOpacity>
         </View>
         <Animated.View

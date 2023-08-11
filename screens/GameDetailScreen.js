@@ -1,11 +1,16 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect,useContext } from "react";
 import { View, Text, Image, StyleSheet, TouchableOpacity, Linking } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { doc, getDoc } from "firebase/firestore";
 import { firestore } from "../firebaseConfig";
 import { ScrollView } from "react-native-gesture-handler";
+import { useTranslation } from "react-i18next"; 
+import combinedTranslations from "../translate/combinedTranslations"; 
+import { LanguageContext } from "../translate/LanguageContext";
 
 const GameDetailScreen = ({ route }) => {
+  const { t } = useTranslation("gameDetail", { translations: combinedTranslations });
+  const { changeLanguage } = useContext(LanguageContext);
   const { item } = route.params;
   const [fullDescription, setFullDescription] = useState(item.description);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -17,6 +22,7 @@ const GameDetailScreen = ({ route }) => {
         const gameDocRef = doc(firestore, "games", item.id);
         const gameDocSnapshot = await getDoc(gameDocRef);
         if (gameDocSnapshot.exists()) {
+          console.log(item.id);
           const data = gameDocSnapshot.data();
           setFullDescription(data.description);
         }
@@ -42,8 +48,18 @@ const GameDetailScreen = ({ route }) => {
         const userData = userDocSnapshot.data();
         const userEmail = userData.email; // Assuming the user's email is stored in the 'email' field of the user document
         setUserEmail(userEmail);
+
         const email = userEmail || "user@example.com"; // Use the fetched email or fallback to 'user@example.com'
-        Linking.openURL(`mailto:${email}`);
+
+        // Customize the subject and body of the email
+        const subject = t("interestedSubject", { gameName: t(`gameDetail.gameName`) });
+        const body = t("interestedBody", { gameName: t(`gameDetail.gameName`) });
+
+        // Construct the mailto URL with subject and body
+        const mailtoURL = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
+        // Open the email client with the customized email
+        Linking.openURL(mailtoURL);
       } else {
         console.log("User document does not exist.");
       }
@@ -61,21 +77,21 @@ const GameDetailScreen = ({ route }) => {
       <ScrollView>
         <Image source={{ uri: item.imageUrl }} style={styles.image} />
         <View style={styles.contentContainer}>
-          <Text style={styles.title}>{item.name}</Text>
+          <Text style={styles.title}>{t(item.name)}</Text>
           <Text style={styles.description}>
-            {isExpanded ? fullDescription : item.description}
+            {isExpanded ? t(fullDescription) : t(item.description)}
           </Text>
           {fullDescription.length > item.description.length && (
             <TouchableOpacity style={styles.showMoreButton} onPress={toggleExpand}>
               <Text style={styles.showMoreText}>
-                {isExpanded ? "Show Less" : "Show More"}
+                {isExpanded ? t("showLess") : t("showMore")}
               </Text>
             </TouchableOpacity>
           )}
         </View>
         <TouchableOpacity style={styles.emailButton} onPress={handleEmailPress}>
           <Ionicons name="mail-outline" size={24} color="#fff" />
-          <Text style={styles.emailButtonText}>Contact the Seller</Text>
+          <Text style={styles.emailButtonText}>{t("contactSwapper")}</Text>
         </TouchableOpacity>
       </ScrollView>
     </View>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useContext } from "react";
 import {
   View,
   Text,
@@ -26,6 +26,10 @@ import {
   buttonTextColor,
 } from "../color";
 import placeholderImage from "../assets/profileimg.jpg";
+import { useTranslation } from "react-i18next";
+import { LanguageContext } from "../translate/LanguageContext";
+import combinedTranslations from "../translate/combinedTranslations";
+import LanguagePicker from "../components/LanguagePicker";
 
 const Home = () => {
   const navigation = useNavigation();
@@ -40,6 +44,13 @@ const Home = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredData, setFilteredData] = useState(data);
   const [profileImageUrl, setProfileImageUrl] = useState(null);
+  const { t, i18n } = useTranslation(["home", "combinedTranslations"]);
+  const { changeLanguage } = useContext(LanguageContext);
+
+  const handleLanguageChange = (selectedLanguage) => {
+    changeLanguage(selectedLanguage);
+    closeModal();
+  };
 
   const navigateToDetail = (item) => {
     navigation.navigate("GameDetailScreen", { item });
@@ -157,6 +168,11 @@ const Home = () => {
           .catch((error) => {
             console.log("Error fetching user profile data: ", error);
           });
+
+        // Set the language based on the user's preferred language
+        if (user.language) {
+          i18n.changeLanguage(user.language);
+        }
       } else {
         setIsAuthenticated(false);
         setUsername(null);
@@ -165,7 +181,7 @@ const Home = () => {
     });
 
     return () => unsubscribe();
-  }, [auth]);
+  }, [auth, i18n]);
 
   // Retrieve data from Firestore "games" collection
   useEffect(() => {
@@ -207,7 +223,7 @@ const Home = () => {
     return (
       <TouchableOpacity
         style={[styles.listItem, { width: containerWidth }]}
-        onPress={() => navigateToDetail(item)} // Navigate to detail screen on press
+        onPress={() => navigateToDetail(item)} 
       >
         <View style={styles.itemContainer}>
           <ImageBackground
@@ -240,39 +256,41 @@ const Home = () => {
         resizeMode="cover"
       >
         <TouchableOpacity onPress={closeModal}>
-        <View style={styles.header}>
-          <Text style={styles.greeting}>
-            {username ? `Hello, ${username}` : "Hello, please log in"}
-          </Text>
-          {isAuthenticated ? (
-            // If authenticated, show user's profile image or placeholder image
-            <TouchableOpacity onPress={openModal}>
-              <ImageBackground
-                source={
-                  profileImageUrl
-                    ? { uri: profileImageUrl }
-                    : require("../assets/profileimg.jpg")
-                }
-                style={styles.profileImage}
-                imageStyle={styles.profileImageBorder}
-              />
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity onPress={openModal}>
-              <ImageBackground
-                source={placeholderImage}
-                style={styles.profileImage}
-                imageStyle={styles.profileImageBorder}
-              />
-            </TouchableOpacity>
-          )}
-        </View>
+          <View style={styles.header}>
+            <Text style={styles.greeting}>
+              {isAuthenticated
+                ? `${t("home:greeting", { username })}`
+                : t("home:greetingNotLoggedIn")}
+            </Text>
+            {isAuthenticated ? (
+              <TouchableOpacity onPress={openModal}>
+                <ImageBackground
+                  source={
+                    profileImageUrl
+                      ? { uri: profileImageUrl }
+                      : require("../assets/profileimg.jpg")
+                  }
+                  style={styles.profileImage}
+                  imageStyle={styles.profileImageBorder}
+                />
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity onPress={openModal}>
+                <ImageBackground
+                  source={placeholderImage}
+                  style={styles.profileImage}
+                  imageStyle={styles.profileImageBorder}
+                />
+              </TouchableOpacity>
+            )}
+          </View>
         </TouchableOpacity>
+
         <View style={styles.searchBar}>
           <Ionicons name="search" size={20} color={inputColor} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Search"
+            placeholder={t("home:searchPlaceholder")}
             placeholderTextColor={inputColor}
             value={searchQuery}
             onChangeText={(text) => setSearchQuery(text)}
@@ -280,7 +298,7 @@ const Home = () => {
         </View>
         <SafeAreaView style={styles.safeAreaContainer}>
           <FlatList
-            data={filteredData} // Render the filtered data
+            data={filteredData}
             renderItem={renderListItem}
             keyExtractor={(item, index) =>
               item.id ? item.id.toString() : index.toString()
@@ -314,7 +332,9 @@ const Home = () => {
                   style={styles.modalIcon}
                 />
                 <Text style={styles.modalText}>
-                  {isAuthenticated ? "Sign Out" : "Log In"}
+                  {isAuthenticated
+                    ? t("home:signOut")
+                    : t("home:logIn")}
                 </Text>
               </View>
             </TouchableOpacity>
@@ -327,7 +347,7 @@ const Home = () => {
                   color={inputColor}
                   style={styles.modalIcon}
                 />
-                <Text style={styles.modalText}>Profile</Text>
+                <Text style={styles.modalText}>{t("home:profile")}</Text>
               </View>
             </TouchableOpacity>
 
@@ -341,9 +361,12 @@ const Home = () => {
                   color={inputColor}
                   style={styles.modalIcon}
                 />
-                <Text style={styles.modalText}>Adding Game</Text>
+                <Text style={styles.modalText}>{t("home:addingGame")}</Text>
               </View>
             </TouchableOpacity>
+            
+            <LanguagePicker/>
+            
           </Animated.View>
         )}
       </ImageBackground>

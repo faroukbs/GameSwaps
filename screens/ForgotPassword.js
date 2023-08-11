@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState,useContext } from "react";
 import {
   View,
   Text,
@@ -8,49 +8,64 @@ import {
   Alert,
 } from "react-native";
 import { getAuth, sendPasswordResetEmail } from "firebase/auth";
+import { useTranslation } from "react-i18next";
+import { LanguageContext } from "../translate/LanguageContext"; 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
+  const { t } = useTranslation(['forgotPassword']);
+
+   // Access the changeLanguage function from the context
+   const { changeLanguage } = useContext(LanguageContext);
 
   const handleForgotPassword = async () => {
+    if (!email) {
+      Alert.alert(
+        t("forgotPassword:errorTitle"),
+        t("forgotPassword:emptyEmailError"),
+      );
+      return;
+    }
+
     try {
       const authInstance = getAuth();
       await sendPasswordResetEmail(authInstance, email);
       // Show success message to the user
       Alert.alert(
-        "Success",
-        "A password reset link has been sent to your email. Please check your inbox.",
+        t("forgotPassword:title"),
+        t("forgotPassword:successMessage"),
         [
           {
             text: "OK",
-            onPress: () =>
-              console.log("Password reset email sent successfully!"),
+            onPress: () => {
+              console.log("Password reset email sent successfully!");
+              setEmail(""); // Clear the email input field
+            },
           },
         ]
       );
     } catch (error) {
       if (error.code === "auth/user-not-found") {
-        // Email not found in Firebase Authentication database
         Alert.alert(
-          "Email Not Found",
-          "The provided email address is not associated with any account. Please check the email and try again."
+          t("forgotPassword:errorTitle"),
+          t("forgotPassword:userNotFoundError"),
         );
       } else {
-        // Other errors
         console.log("Error sending password reset email:", error);
         Alert.alert(
-          "Error",
-          "An error occurred while sending the password reset email. Please try again later."
+          t("forgotPassword:errorTitle"),
+          t("forgotPassword:genericError"),
         );
       }
     }
   };
 
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Forgot Password</Text>
+      <Text style={styles.title}>{t('forgotPassword:title')}</Text>
       <TextInput
         style={styles.input}
-        placeholder="Email"
+        placeholder={t('forgotPassword:emailPlaceholder')}
         onChangeText={(text) => setEmail(text)}
         value={email}
       />
@@ -59,8 +74,9 @@ const ForgotPassword = () => {
         onPress={handleForgotPassword}
         activeOpacity={0.7}
       >
-        <Text style={styles.buttonText}>Reset Password</Text>
+        <Text style={styles.buttonText}>{t('forgotPassword:resetPasswordButton')}</Text>
       </TouchableOpacity>
+
     </View>
   );
 };

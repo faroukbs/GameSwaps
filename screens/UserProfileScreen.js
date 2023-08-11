@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect,useContext } from "react";
 import {
   View,
   Text,
@@ -21,6 +21,9 @@ import {
 } from "firebase/storage";
 import * as ImagePicker from "expo-image-picker";
 import { firestore } from "../firebaseConfig";
+import { useTranslation } from "react-i18next";
+import combinedTranslations from "../translate/combinedTranslations";
+import { LanguageContext } from "../translate/LanguageContext";
 
 const UserProfileScreen = () => {
   const [user, setUser] = useState(null);
@@ -30,6 +33,8 @@ const UserProfileScreen = () => {
   const [refreshing, setRefreshing] = useState(false);
   const navigation = useNavigation();
   const storage = getStorage();
+  const { t } = useTranslation("userProfile", { translations: combinedTranslations });
+  const { changeLanguage } = useContext(LanguageContext);
 
   const handleNavigationToGamesList = () => {
     navigation.navigate("UserPostedGamesScreen");
@@ -182,15 +187,15 @@ const UserProfileScreen = () => {
       <Text style={styles.username}>{user.username}</Text>
       <Text style={styles.email}>{user.email}</Text>
       <View style={styles.userInfoContainer}>
-        <Text style={styles.userInfoLabel}>Name:</Text>
+        <Text style={styles.userInfoLabel}>{t("nameLabel")}:</Text>
         <Text style={styles.userInfo}>{user.name}</Text>
       </View>
       <View style={styles.userInfoContainer}>
-        <Text style={styles.userInfoLabel}>Last Name:</Text>
+        <Text style={styles.userInfoLabel}>{t("lastNameLabel")}:</Text>
         <Text style={styles.userInfo}>{user.lastName}</Text>
       </View>
       <View style={styles.userInfoContainer}>
-        <Text style={styles.userInfoLabel}>Phone Number:</Text>
+        <Text style={styles.userInfoLabel}>{t("phoneNumberLabel")}:</Text>
         <Text style={styles.userInfo}>{user.phoneNumber}</Text>
       </View>
 
@@ -198,24 +203,25 @@ const UserProfileScreen = () => {
         style={styles.button}
         onPress={handleNavigationToGamesList}
       >
-        <Text style={styles.buttonText}>My List of Games</Text>
+        <Text style={styles.buttonText}>{t("listOfGamesButton")}</Text>
       </TouchableOpacity>
       <TouchableOpacity style={styles.button} onPress={handleUpdateProfile}>
-        <Text style={styles.buttonText}>Update Profile</Text>
+        <Text style={styles.buttonText}>{t("updateProfileButton")}</Text>
       </TouchableOpacity>
       <TouchableOpacity style={styles.button} onPress={handleSignOut}>
-        <Text style={styles.buttonText}>Sign Out</Text>
+        <Text style={styles.buttonText}>{t("signOutButton")}</Text>
       </TouchableOpacity>
 
       {uploading && (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#007bff" />
-          <Text style={styles.loadingText}>Uploading...</Text>
+          <Text style={styles.loadingText}>{t("uploadingText")}</Text>
         </View>
       )}
     </ScrollView>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: {

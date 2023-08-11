@@ -1,17 +1,5 @@
-import React, { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  Image,
-  SafeAreaView,
-  FlatList,
-  Platform,
-  Alert,
-  ActivityIndicator,
-} from "react-native";
+import React, { useState, useEffect, useContext } from "react";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, SafeAreaView, FlatList, Platform, Alert, ActivityIndicator } from "react-native";
 import { collection, addDoc, getDocs } from "firebase/firestore";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
@@ -21,7 +9,8 @@ import * as ImagePicker from "expo-image-picker";
 import * as Notifications from "expo-notifications";
 import * as Device from "expo-device";
 import { useNavigation } from "@react-navigation/native";
-
+import { useTranslation } from "react-i18next";
+import { LanguageContext } from "../translate/LanguageContext";
 const storage = getStorage();
 
 const GameAddingScreen = () => {
@@ -35,6 +24,10 @@ const GameAddingScreen = () => {
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState(null);
   const navigation = useNavigation();
+  const { t } = useTranslation("gameAdding");
+  const { changeLanguage } = useContext(LanguageContext);
+
+
   const showLoginPrompt = () => {
     Alert.alert(
       "Login Required",
@@ -214,15 +207,15 @@ const GameAddingScreen = () => {
         contentContainerStyle={styles.contentContainer}
         ListHeaderComponent={
           <>
-            <Text style={styles.title}>Add Game</Text>
+            <Text style={styles.title}>{t("title")}</Text>
             <TextInput
               style={styles.input}
-              placeholder="Game Name"
+              placeholder={t("gameNamePlaceholder")}
               onChangeText={(text) => setGameName(text)}
               value={gameName}
             />
             <View style={styles.pickerContainer}>
-              <Text style={styles.pickerLabel}>Game Types</Text>
+              <Text style={styles.pickerLabel}>{t("gameTypes")}</Text>
               <MultiSelect
                 items={gameTypes.map((name, index) => ({
                   id: index.toString(),
@@ -231,7 +224,7 @@ const GameAddingScreen = () => {
                 uniqueKey="id"
                 onSelectedItemsChange={(items) => setSelectedGameTypes(items)}
                 selectedItems={selectedGameTypes}
-                selectText="Select Game Types"
+                selectText={t("selectGameTypes")}
                 tagRemoveIconColor="#CCC"
                 tagBorderColor="#CCC"
                 tagTextColor="#333"
@@ -241,18 +234,16 @@ const GameAddingScreen = () => {
                 displayKey="name"
                 searchInputStyle={styles.searchInput}
                 submitButtonColor="#007bff"
-                submitButtonText="Submit"
+                submitButtonText={t("submit")}
                 styleMainWrapper={styles.picker}
-                styleDropdownMenuSubsection={
-                  styles.pickerDropdownMenuSubsection
-                }
+                styleDropdownMenuSubsection={styles.pickerDropdownMenuSubsection}
                 styleTextDropdownSelected={styles.pickerTextDropdownSelected}
                 styleDropdownMenu={styles.pickerDropdownMenu}
               />
             </View>
             <TextInput
               style={[styles.input, { height: 80 }]}
-              placeholder="Game Description"
+              placeholder={t("gameDescriptionPlaceholder")}
               onChangeText={(text) => setGameDescription(text)}
               value={gameDescription}
               multiline
@@ -271,7 +262,7 @@ const GameAddingScreen = () => {
                 style={styles.imageUploadButton}
                 onPress={handleImageUpload}
               >
-                <Text style={styles.imageUploadButtonText}>Upload Image</Text>
+                <Text style={styles.imageUploadButtonText}>{t("uploadImage")}</Text>
               </TouchableOpacity>
             </View>
             <TouchableOpacity
@@ -282,7 +273,7 @@ const GameAddingScreen = () => {
               {loading ? (
                 <ActivityIndicator size="small" color="#fff" />
               ) : (
-                <Text style={styles.addButtonLabel}>Add Game</Text>
+                <Text style={styles.addButtonLabel}>{t("addGame")}</Text>
               )}
             </TouchableOpacity>
           </>
